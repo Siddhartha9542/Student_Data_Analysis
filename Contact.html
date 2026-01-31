@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root { 
+            --bg-dark: #0f172a; 
+            --card-bg: #1e293b;
+            --text-white: #ffffff; 
+            --neon-blue: #00f2ff; 
+            --neon-green: #00ff9d; 
+            --neon-red: #ff0055; 
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background-color: var(--bg-dark); 
+            color: var(--text-white); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+        }
+
+        /* --- LAYOUT WRAPPER --- */
+        .page-wrapper {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* --- IMAGE SECTION --- */
+        .image-container {
+            width: 100%; height: 40vh; background: #111; position: relative;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .product-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .back-btn-circle { position: absolute; top: 20px; left: 20px; width: 40px; height: 40px; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; border: 1px solid rgba(255,255,255,0.2); z-index: 10; }
+
+        /* --- DETAILS SECTION --- */
+        .details-container {
+            flex: 1; background: var(--card-bg); border-radius: 25px 25px 0 0; margin-top: -20px;
+            position: relative; z-index: 5; padding: 30px; display: flex; flex-direction: column; gap: 15px;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.3);
+        }
+
+        .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        .cat-badge { background: var(--neon-blue); color: #000; padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .item-title { font-size: 24px; font-weight: 600; line-height: 1.3; }
+        .item-price { font-size: 28px; font-weight: 700; color: var(--neon-green); }
+        .date-posted { font-size: 12px; color: #64748b; margin-top: 5px; }
+        .divider { height: 1px; background: var(--glass-border); width: 100%; margin: 10px 0; }
+        .section-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 5px; }
+        .desc-text { font-size: 14px; color: #cbd5e1; line-height: 1.6; }
+
+        .seller-box { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 15px; border-radius: 12px; margin-top: 10px; }
+        .seller-avatar { width: 45px; height: 45px; background: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ccc; }
+
+        /* --- ACTIONS --- */
+        .action-bar { position: sticky; bottom: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); padding: 20px 30px; border-top: 1px solid var(--glass-border); width: 100%; display: flex; flex-direction: column; gap: 10px; }
+        .btn-whatsapp { width: 100%; background: #25D366; color: white; border: none; padding: 16px; border-radius: 30px; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.2s; box-shadow: 0 5px 15px rgba(37, 211, 102, 0.2); }
+        .btn-report { background: transparent; border: none; color: var(--neon-red); font-size: 12px; cursor: pointer; width: 100%; text-align: center; padding: 5px; }
+
+        /* --- REPORT MODAL --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-box { background: #1e293b; width: 85%; max-width: 320px; padding: 25px; border-radius: 20px; border: 1px solid var(--glass-border); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .reason-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); padding: 12px; color: white; border-radius: 8px; margin: 15px 0; outline: none; }
+        .btn-confirm { background: var(--neon-red); color: white; padding: 10px 25px; border-radius: 20px; border: none; font-weight: 600; cursor: pointer; }
+        .btn-cancel { background: transparent; color: #aaa; border: none; cursor: pointer; margin-right: 15px; }
+
+        @media (min-width: 900px) {
+            .page-wrapper { flex-direction: row; margin-top: 40px; border: 1px solid var(--glass-border); border-radius: 20px; overflow: hidden; height: 600px; }
+            .image-container { width: 50%; height: 100%; }
+            .details-container { width: 50%; border-radius: 0; margin-top: 0; overflow-y: auto; }
+            .action-bar { position: static; background: transparent; border: none; margin-top: auto; }
+        }
+        #debugLog { display: none; color: #ff4757; margin-bottom: 10px; font-size: 12px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="page-wrapper">
+        <div class="image-container">
+            <a href="Marketplace.html" class="back-btn-circle"><i class="fa-solid fa-arrow-left"></i></a>
+            <img id="itemImg" class="product-img" src="" alt="Loading..." onerror="this.style.display='none'">
+        </div>
+
+        <div class="details-container">
+            <div id="debugLog"></div>
+            <div class="header-row">
+                <div><span class="cat-badge" id="itemType">...</span><div class="date-posted" id="itemDate">...</div></div>
+                <div class="item-price" id="itemPrice">--</div>
+            </div>
+            <div class="item-title" id="itemTitle">Fetching Item...</div>
+            <div class="divider"></div>
+            <div><div class="section-label">Description</div><div class="desc-text" id="itemDesc">Please wait...</div></div>
+            <div>
+                <div class="section-label">Sold By</div>
+                <div class="seller-box">
+                    <div class="seller-avatar"><i class="fa-solid fa-user"></i></div>
+                    <div><div style="font-weight:600;" id="sellerName">--</div><div style="font-size:11px; color:#aaa;" id="sellerPin">PIN: --</div></div>
+                </div>
+            </div>
+            <div class="action-bar">
+                <button class="btn-whatsapp" onclick="handleWhatsApp()"><i class="fa-brands fa-whatsapp" style="font-size:20px;"></i> Chat on WhatsApp</button>
+                <button class="btn-report" onclick="openReportModal()"><i class="fa-solid fa-flag"></i> Report Listing</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal-box">
+            <h3 style="color:var(--neon-red)">Report Item</h3>
+            <p style="font-size:12px; color:#aaa; margin-top:5px;">Please tell us why you are reporting this.</p>
+            <input type="text" id="reportReason" class="reason-input" placeholder="Reason (e.g. Spam, Fake)">
+            <div>
+                <button class="btn-cancel" onclick="document.getElementById('reportModal').style.display='none'">Cancel</button>
+                <button class="btn-confirm" onclick="submitReport()">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyDpN_1iAlE6K7YEeKOt5fMnPqMo5eNodBM",
+          authDomain: "student-data-analysis-85831.firebaseapp.com",
+          projectId: "student-data-analysis-85831",
+          storageBucket: "student-data-analysis-85831.firebasestorage.app",
+          messagingSenderId: "739540856409",
+          appId: "1:739540856409:web:155e5d3efb17211aff8b48",
+          measurementId: "G-Y0VK71KDB1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemId = urlParams.get('id');
+        const userPin = localStorage.getItem("userPIN");
+
+        window.onload = function() {
+            if (!itemId) { document.getElementById('debugLog').innerText="No Item ID"; document.getElementById('debugLog').style.display='block'; } 
+            else { loadItemData(itemId); }
+        };
+
+        async function loadItemData(id) {
+            try {
+                const docSnap = await getDoc(doc(db, "market_items", id));
+                if (docSnap.exists()) { renderUI(docSnap.data()); } 
+                else { document.getElementById('itemTitle').innerText = "Item Deleted"; }
+            } catch (e) { document.getElementById('debugLog').innerText=e.message; document.getElementById('debugLog').style.display='block'; }
+        }
+
+        function renderUI(data) {
+            document.getElementById('itemTitle').innerText = data.title;
+            document.getElementById('itemPrice').innerText = "₹" + data.price;
+            document.getElementById('itemDesc').innerText = data.description;
+            document.getElementById('itemType').innerText = data.type || "SELL";
+            document.getElementById('sellerName').innerText = data.seller_name || "Unknown";
+            document.getElementById('sellerPin').innerText = data.seller_pin || "--";
+            if(data.timestamp) document.getElementById('itemDate').innerText = "Posted " + data.timestamp.toDate().toLocaleDateString();
+            if(data.image_url) { document.getElementById('itemImg').src = data.image_url; document.getElementById('itemImg').style.display = 'block'; }
+            window.currentItem = data;
+        }
+
+        window.handleWhatsApp = function() {
+            if(!window.currentItem) return;
+            let phone = (window.currentItem.seller_phone || "").replace(/\D/g, '');
+            if(phone.length === 10) phone = "91" + phone;
+            if(phone.length < 10) return alert("Invalid Phone Number");
+            const text = `Hi, I am interested in: ${window.currentItem.title}`;
+            window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+        }
+
+        window.openReportModal = function() {
+            if(!userPin) return alert("Please Login to Report");
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+
+        window.submitReport = async function() {
+            const reason = document.getElementById('reportReason').value;
+            if(!reason) return alert("Enter a reason");
+            
+            try {
+                await addDoc(collection(db, "reports"), {
+                    item_id: itemId,
+                    item_title: window.currentItem ? window.currentItem.title : "Unknown",
+                    reason: reason,
+                    reporter: userPin,
+                    timestamp: serverTimestamp()
+                });
+                alert("Report Sent!");
+                document.getElementById('reportModal').style.display = 'none';
+            } catch(e) { alert("Error: " + e.message); }
+        }
+    </script>
+</body>
+  </html>
+
