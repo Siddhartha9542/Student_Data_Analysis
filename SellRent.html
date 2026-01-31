@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Advertisement</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-white: #ffffff;
+            --text-muted: #94a3b8;
+            --neon-blue: #00f2ff;
+            --neon-green: #00ff9d;
+            --card-radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            padding: 15px 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn {
+            color: var(--text-white);
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        .page-title { font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
+
+        /* --- CONTAINER --- */
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        /* --- TOGGLE SWITCH --- */
+        .toggle-container {
+            display: flex;
+            background: rgba(255,255,255,0.05);
+            padding: 4px;
+            border-radius: 30px;
+            position: relative;
+        }
+
+        .toggle-option {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 2;
+            transition: 0.3s;
+            color: var(--text-muted);
+        }
+
+        .toggle-option.active { color: #000; }
+
+        .toggle-bg {
+            position: absolute;
+            top: 4px; left: 4px;
+            width: 50%; 
+            height: calc(100% - 8px);
+            background: var(--neon-blue);
+            border-radius: 25px;
+            transition: 0.3s;
+            z-index: 1;
+        }
+
+        .toggle-container.rent-mode .toggle-bg { left: 50%; background: #bd00ff; }
+        .toggle-container.rent-mode .toggle-option.active { color: white; } 
+
+        /* --- CATEGORY GRID --- */
+        .label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; }
+
+        .cat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .cat-item {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .cat-item:hover, .cat-item.selected {
+            border-color: var(--neon-blue);
+            background: rgba(0, 242, 255, 0.1);
+        }
+        .cat-icon { font-size: 18px; margin-bottom: 5px; color: var(--text-white); }
+        .cat-name { font-size: 12px; color: var(--text-muted); }
+
+        /* --- IMAGE UPLOAD --- */
+        .upload-box {
+            border: 2px dashed var(--glass-border);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .upload-box:hover { border-color: var(--neon-blue); background: rgba(255,255,255,0.01); }
+        
+        /* FIX: Ensure uploaded image covers the box */
+        #previewImg {
+            display: none;
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .upload-icon { font-size: 30px; color: var(--text-muted); margin-bottom: 10px; }
+        .upload-text { font-size: 12px; color: var(--text-muted); }
+
+        /* --- INPUTS --- */
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        
+        input, textarea {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 12px;
+            border-radius: 8px;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            outline: none;
+        }
+        input:focus, textarea:focus { border-color: var(--neon-blue); }
+
+        /* --- BUTTON --- */
+        .btn-submit {
+            background: linear-gradient(90deg, var(--neon-blue), #0072ff);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 30px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 198, 255, 0.3);
+            width: 100%;
+        }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: none; 
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-card {
+            background: #1e293b;
+            border: 1px solid var(--glass-border);
+            width: 85%;
+            max-width: 350px;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        
+        .btn-modal {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 12px;
+            display: inline-block;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="Marketplace.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="page-title">Post Advertisement</div>
+    </div>
+
+    <div class="container">
+
+        <div class="input-group">
+            <div class="label">I want to</div>
+            <div class="toggle-container" id="typeToggle">
+                <div class="toggle-bg"></div>
+                <div class="toggle-option active" onclick="setMode('sell')">SELL</div>
+                <div class="toggle-option" onclick="setMode('rent')">RENT</div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div class="label">Select Category</div>
+            <div class="cat-grid" id="categoryGrid">
+                <div class="cat-item" onclick="selectCat(this, 'Books')"><i class="fa-solid fa-book cat-icon"></i><div class="cat-name">Books</div></div>
+                <div class="cat-item" onclick="selectCat(this, 'Projects')"><i class="fa-solid fa-microchip cat-icon"></i><div class="cat-name">Projects</div></div>
+                <div class="cat-item" onclick="selectCat(this, 'Electronics')"><i class="fa-solid fa-plug cat-icon"></i><div class="cat-name">Electronics</div></div>
+                <div class="cat-item" onclick="selectCat(this, 'Giveaway')"><i class="fa-solid fa-gift cat-icon"></i><div class="cat-name">Giveaway</div></div>
+            </div>
+            <input type="hidden" id="selectedCategory" value="">
+        </div>
+
+        <div class="input-group">
+            <div class="label">Item Photo</div>
+            <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                <i class="fa-solid fa-camera upload-icon"></i>
+                <div class="upload-text">Tap to upload image</div>
+                <input type="file" id="fileInput" hidden accept="image/*" onchange="previewImage(event)">
+                <img id="previewImg" src="" alt="Preview">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div class="label">Product Name</div>
+            <input type="text" id="prodName" placeholder="e.g. Arduino Uno / M2 Textbook">
+        </div>
+
+        <div class="input-group">
+            <div class="label" id="priceLabel">Total Price (₹)</div>
+            <input type="number" id="prodPrice" placeholder="e.g. 500">
+        </div>
+
+        <div class="input-group">
+            <div class="label">Description (Optional)</div>
+            <textarea id="prodDesc" rows="3" placeholder="Condition, Model, Reason for selling..."></textarea>
+        </div>
+
+        <div class="input-group">
+            <div class="label" style="color:var(--neon-blue)">Seller Info</div>
+            <div style="font-size:12px; color:#666; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px;">
+                Your Phone Number will be securely fetched from your Profile.
+            </div>
+        </div>
+
+        <button class="btn-submit" onclick="submitAd()">SUBMIT AD</button>
+
+    </div>
+
+    <div class="modal-overlay" id="successModal">
+        <div class="modal-card">
+            <div class="modal-icon" style="font-size:40px; color:#00ff9d; margin-bottom:10px;"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="modal-title" style="font-weight:600; font-size:18px;">Submitted!</div>
+            <div class="modal-desc" style="color:#aaa; font-size:12px; margin:10px 0;">
+                Your ad is currently <b>PENDING APPROVAL</b>. <br>It will appear once the Admin verifies it.
+            </div>
+            <a href="Marketplace.html" class="btn-modal">Back to Market</a>
+        </div>
+    </div>
+
+    <script type="module" src="market.js"></script>
+
+    <script>
+        function setMode(mode) {
+            const container = document.getElementById('typeToggle');
+            const options = document.querySelectorAll('.toggle-option');
+            const priceLabel = document.getElementById('priceLabel');
+            
+            if(mode === 'rent') {
+                container.classList.add('rent-mode');
+                options[0].classList.remove('active');
+                options[1].classList.add('active');
+                priceLabel.innerText = "Price per Day (₹)";
+            } else {
+                container.classList.remove('rent-mode');
+                options[0].classList.add('active');
+                options[1].classList.remove('active');
+                priceLabel.innerText = "Total Price (₹)";
+            }
+        }
+
+        function selectCat(el, catName) {
+            document.querySelectorAll('.cat-item').forEach(item => item.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('selectedCategory').value = catName;
+            
+            const priceInput = document.getElementById('prodPrice');
+            if(catName === 'Giveaway') {
+                priceInput.value = "0";
+                priceInput.readOnly = true;
+                priceInput.style.color = "#00ff9d";
+            } else {
+                priceInput.readOnly = false;
+                priceInput.style.color = "white";
+                if(priceInput.value === "0") priceInput.value = "";
+            }
+        }
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('previewImg');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</body>
+</html>
+
