@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Previous Papers</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-white: #ffffff;
+            --text-muted: #94a3b8;
+            --neon-blue: #00f2ff;
+            --neon-green: #00ff9d;
+            --danger: #ff0055;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            padding: 15px 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn { color: var(--text-white); font-size: 16px; text-decoration: none; }
+        .page-title { font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* --- FILTERS --- */
+        .filters-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        
+        .custom-select {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            width: 100%;
+            outline: none;
+            font-size: 12px;
+            appearance: none;
+        }
+
+        /* --- MODE SWITCH --- */
+        .mode-switch {
+            background: rgba(255,255,255,0.05);
+            padding: 4px;
+            border-radius: 25px;
+            display: flex;
+            position: relative;
+            margin: 10px 0;
+        }
+        .mode-btn { flex: 1; text-align: center; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; z-index: 2; transition: 0.3s; color: var(--text-muted); }
+        .mode-btn.active { color: #000; }
+        .mode-bg { position: absolute; top: 4px; left: 4px; width: 50%; height: calc(100% - 8px); background: var(--neon-blue); border-radius: 20px; transition: 0.3s; z-index: 1; }
+        .mode-switch.upload-mode .mode-bg { transform: translateX(100%); background: var(--neon-green); }
+
+        /* --- LIST --- */
+        .paper-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            transition: 0.2s;
+        }
+        .paper-info { display: flex; align-items: center; gap: 15px; }
+        .pdf-icon { font-size: 24px; color: #ff4757; background: rgba(255, 71, 87, 0.1); padding: 10px; border-radius: 8px; }
+        .p-title { font-size: 14px; font-weight: 500; color: white; }
+        .p-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+        .btn-dl {
+            background: rgba(0, 242, 255, 0.1);
+            color: var(--neon-blue);
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* --- UPLOAD SECTION --- */
+        .upload-section { display: none; flex-direction: column; gap: 15px; animation: fadeIn 0.3s; }
+        .upload-input { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 15px; border-radius: 12px; color: white; width: 100%; outline: none; }
+        .drop-zone { border: 2px dashed var(--glass-border); border-radius: 15px; padding: 30px; text-align: center; cursor: pointer; }
+        .btn-submit-upload { background: var(--neon-green); color: #000; border: none; padding: 15px; border-radius: 30px; font-weight: 600; width: 100%; cursor: pointer; margin-top: 10px; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="dashboard.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="page-title">Previous Papers</div>
+    </div>
+
+    <div class="container">
+        
+        <div class="mode-switch" id="modeSwitch">
+            <div class="mode-bg"></div>
+            <div class="mode-btn active" onclick="setMode('download')">FIND PAPERS</div>
+            <div class="mode-btn" onclick="setMode('upload')">UPLOAD NEW</div>
+        </div>
+
+        <div id="downloadSection">
+            <div class="filters-grid">
+                <select class="custom-select" id="semSelect" onchange="loadPapers()">
+                    <option value="All">All Sems</option>
+                    <option value="Sem 1">Sem 1</option><option value="Sem 2">Sem 2</option>
+                    <option value="Sem 3">Sem 3</option><option value="Sem 4">Sem 4</option>
+                    <option value="Sem 5">Sem 5</option><option value="Sem 6">Sem 6</option>
+                </select>
+                <select class="custom-select" id="examSelect" onchange="loadPapers()">
+                    <option value="All">All Exams</option>
+                    <option value="Mid 1">Mid 1</option><option value="Mid 2">Mid 2</option>
+                    <option value="End Sem">End Sem</option>
+                </select>
+                <select class="custom-select" id="schemeSelect" onchange="loadPapers()">
+                    <option value="All">All Schemes</option>
+                    <option value="C-21">C-21</option><option value="C-24">C-24</option>
+                </select>
+            </div>
+            
+            <div id="papersList" style="margin-top: 20px;">
+                <div style="text-align:center; padding:20px; color:#666;">Loading...</div>
+            </div>
+        </div>
+
+        <div id="uploadSection" class="upload-section">
+            <input type="text" id="subjectName" class="upload-input" placeholder="Subject Name (e.g. Java Programming)" required>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <select class="custom-select" id="upSem"><option>Sem 1</option><option>Sem 2</option><option>Sem 3</option><option>Sem 4</option><option>Sem 5</option><option>Sem 6</option></select>
+                <select class="custom-select" id="upExam"><option>Mid 1</option><option>Mid 2</option><option>End Sem</option></select>
+            </div>
+            <select class="custom-select" id="upScheme"><option>C-21</option><option>C-24</option></select>
+
+            <div class="drop-zone" onclick="document.getElementById('pdfInput').click()">
+                <i class="fa-solid fa-cloud-arrow-up" style="font-size:30px; color:#666; margin-bottom:10px;"></i>
+                <div id="fileName" style="font-size:12px; color:#aaa;">Tap to Select PDF</div>
+                <input type="file" id="pdfInput" hidden accept=".pdf" onchange="document.getElementById('fileName').innerText = this.files[0].name">
+            </div>
+            
+            <button class="btn-submit-upload" onclick="submitUpload()">SUBMIT PAPER</button>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyDpN_1iAlE6K7YEeKOt5fMnPqMo5eNodBM",
+          authDomain: "student-data-analysis-85831.firebaseapp.com",
+          projectId: "student-data-analysis-85831",
+          storageBucket: "student-data-analysis-85831.firebasestorage.app",
+          messagingSenderId: "739540856409",
+          appId: "1:739540856409:web:155e5d3efb17211aff8b48",
+          measurementId: "G-Y0VK71KDB1"
+        };
+
+        const supabaseUrl = 'https://zgkjmnoqnbtfcyrifjai.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpna2ptbm9xbmJ0ZmN5cmlmamFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MjkyMDQsImV4cCI6MjA4NTEwNTIwNH0.p4M5L5XrNwPfYZ78uiHYqbnMyW80vca1p0Ua-_g88x4';
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const currentUserPIN = localStorage.getItem("userPIN");
+
+        // --- UI SWITCHER ---
+        window.setMode = function(mode) {
+            const sw = document.getElementById('modeSwitch');
+            const dl = document.getElementById('downloadSection');
+            const up = document.getElementById('uploadSection');
+            const btns = document.querySelectorAll('.mode-btn');
+
+            if(mode === 'upload') {
+                sw.classList.add('upload-mode');
+                btns[0].classList.remove('active'); btns[1].classList.add('active');
+                dl.style.display = 'none'; up.style.display = 'flex';
+            } else {
+                sw.classList.remove('upload-mode');
+                btns[0].classList.add('active'); btns[1].classList.remove('active');
+                dl.style.display = 'block'; up.style.display = 'none';
+                loadPapers();
+            }
+        }
+
+        // --- FETCH PAPERS ---
+        window.loadPapers = async function() {
+            const list = document.getElementById('papersList');
+            list.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Searching...</div>';
+            
+            try {
+                // Fetch All Approved
+                const q = query(collection(db, "papers"), where("status", "==", "approved"), orderBy("timestamp", "desc"));
+                const snap = await getDocs(q);
+                
+                // Client Side Filtering (Simpler than many indexes)
+                const semFilter = document.getElementById('semSelect').value;
+                const examFilter = document.getElementById('examSelect').value;
+                const schemeFilter = document.getElementById('schemeSelect').value;
+
+                let html = "";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    
+                    // Filter Logic
+                    if(semFilter !== "All" && d.semester !== semFilter) return;
+                    if(examFilter !== "All" && d.exam_type !== examFilter) return;
+                    if(schemeFilter !== "All" && d.scheme !== schemeFilter) return;
+
+                    html += `
+                        <div class="paper-card">
+                            <div class="paper-info">
+                                <div class="pdf-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                                <div>
+                                    <div class="p-title">${d.subject}</div>
+                                    <div class="p-meta">${d.exam_type} | ${d.scheme} | ${d.semester}</div>
+                                </div>
+                            </div>
+                            <a href="${d.pdf_url}" target="_blank" class="btn-dl">
+                                <i class="fa-solid fa-download"></i>
+                            </a>
+                        </div>
+                    `;
+                });
+
+                list.innerHTML = html || '<div style="text-align:center; padding:20px; color:#666;">No papers found.</div>';
+
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = '<div style="text-align:center; color:#ff4757;">Error loading papers.</div>';
+            }
+        }
+
+        // --- UPLOAD ---
+        window.submitUpload = async function() {
+            if (!currentUserPIN) return alert("Please login first!");
+            
+            const sub = document.getElementById('subjectName').value;
+            const file = document.getElementById('pdfInput').files[0];
+            const btn = document.querySelector('.btn-submit-upload');
+
+            if(!sub || !file) return alert("Please fill all fields");
+
+            btn.innerText = "Uploading...";
+            btn.disabled = true;
+
+            try {
+                // 1. Supabase Upload
+                const fileName = `${currentUserPIN}_${Date.now()}.pdf`;
+                const { data, error } = await supabase.storage.from('question-papers').upload(fileName, file);
+                if (error) throw error;
+
+                const { data: urlData } = supabase.storage.from('question-papers').getPublicUrl(fileName);
+
+                // 2. Firebase Save
+                await addDoc(collection(db, "papers"), {
+                    subject: sub,
+                    semester: document.getElementById('upSem').value,
+                    exam_type: document.getElementById('upExam').value,
+                    scheme: document.getElementById('upScheme').value,
+                    pdf_url: urlData.publicUrl,
+                    uploader_pin: currentUserPIN,
+                    status: "pending",
+                    timestamp: serverTimestamp()
+                });
+
+                alert("Uploaded! Waiting for Admin Approval.");
+                window.location.reload();
+
+            } catch(e) {
+                alert("Error: " + e.message);
+                btn.innerText = "Try Again";
+                btn.disabled = false;
+            }
+        }
+        
+        // Initial Load
+        loadPapers();
+    </script>
+</body>
+</html>
+
