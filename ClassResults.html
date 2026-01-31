@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Leaderboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-white: #ffffff;
+            --neon-blue: #00f2ff;
+            --neon-gold: #ffd700;
+            --neon-silver: #c0c0c0;
+            --neon-bronze: #cd7f32;
+            --neon-green: #00ff9d;
+            --neon-red: #ff0055;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            min-height: 100vh;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            padding: 15px 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .back-btn { color: white; text-decoration: none; font-size: 16px; }
+        .page-title { font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
+        
+        .btn-excel {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .btn-excel:active { transform: scale(0.95); }
+
+        /* --- TABLE CONTAINER --- */
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 10px;
+            overflow-x: auto; /* Scrollable on mobile */
+        }
+
+        .glass-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--glass-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: center; 
+            border-bottom: 1px solid var(--glass-border);
+            white-space: nowrap;
+        }
+
+        th {
+            background: rgba(0, 242, 255, 0.1);
+            color: var(--neon-blue);
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        /* Align Names Left */
+        th:nth-child(3), td:nth-child(3) { text-align: left; }
+
+        td { color: #cbd5e1; }
+
+        /* --- RANKING STYLES --- */
+        .rank-icon { margin-right: 5px; }
+        .rank-1 { color: var(--neon-gold); font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+        .rank-2 { color: var(--neon-silver); font-weight: bold; }
+        .rank-3 { color: var(--neon-bronze); font-weight: bold; }
+
+        /* --- HIGHLIGHT USER --- */
+        .highlight-me {
+            background: rgba(0, 242, 255, 0.1) !important;
+            border-left: 3px solid var(--neon-blue);
+        }
+        .highlight-me td { color: white; font-weight: 500; }
+
+        /* --- COLUMN STYLES --- */
+        .col-sgpa { color: var(--neon-green); font-weight: 700; font-size: 14px; }
+        .col-credits { color: #cbd5e1; font-weight: 500; }
+        .col-marks { color: #fff; font-weight: 600; }
+        
+        .badge-backlog {
+            background: rgba(255, 0, 85, 0.15);
+            color: var(--neon-red);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-clean {
+            color: #64748b;
+            font-size: 11px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div style="display:flex; gap:15px; align-items:center;">
+            <a href="dashboard.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+            <div class="page-title">Class Results</div>
+        </div>
+        <button class="btn-excel" onclick="downloadExcel()">
+            <i class="fa-solid fa-file-excel"></i> Excel
+        </button>
+    </div>
+
+    <div class="container">
+        <table class="glass-table" id="resultsTable">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>PIN</th>
+                    <th>Name</th>
+                    <th>SGPA</th>
+                    <th>Total Marks</th>
+                    <th>Backlogs</th>
+                    <th>Credits</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="7" style="text-align:center; padding:20px;">Loading Data...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 1. Load Data from LocalStorage
+        const rawData = localStorage.getItem("leaderboard_data");
+        const userPin = localStorage.getItem("user_pin");
+        const tableBody = document.getElementById('tableBody');
+
+        if(rawData) {
+            const data = JSON.parse(rawData);
+            
+            // Sort by SGPA Descending
+            data.sort((a, b) => b.sgpa - a.sgpa);
+
+            let html = "";
+            
+            data.forEach((student, index) => {
+                const rank = index + 1;
+                let rankDisplay = `#${rank}`;
+                let rowClass = "";
+
+                // Icons for Top 3
+                if(rank === 1) rankDisplay = `<i class="fa-solid fa-trophy rank-icon"></i> #1`;
+                if(rank === 2) rankDisplay = `<i class="fa-solid fa-medal rank-icon"></i> #2`;
+                if(rank === 3) rankDisplay = `<i class="fa-solid fa-medal rank-icon"></i> #3`;
+
+                // Color Classes
+                let rankClass = "";
+                if(rank === 1) rankClass = "rank-1";
+                if(rank === 2) rankClass = "rank-2";
+                if(rank === 3) rankClass = "rank-3";
+
+                // Highlight "Me"
+                if(student.pin === userPin) rowClass = "highlight-me";
+
+                // --- NEW ROBUST CALCULATIONS ---
+                let totalMarks = 0;
+                let backlogs = 0;
+
+                if (student.raw_report && Array.isArray(student.raw_report)) {
+                    student.raw_report.forEach(sub => {
+                        // Add Marks (Ensure it's a number)
+                        if (sub.SubjectTotal) {
+                            totalMarks += Number(sub.SubjectTotal) || 0;
+                        }
+                        
+                        // Check for Backlogs (Case Insensitive)
+                        // Checks Grade, HybridGrade, and Result fields
+                        const g = String(sub.HybridGrade || sub.Grade || "").toUpperCase().trim();
+                        const r = String(sub.Result || "").toUpperCase().trim();
+
+                        if (g === 'F' || g === 'AB' || g === 'ABSENT' || g === 'FAIL' || r === 'FAIL' || r === 'F') {
+                            backlogs++;
+                        }
+                    });
+                }
+
+                // Format Backlogs
+                let backlogHtml = backlogs > 0 
+                    ? `<span class="badge-backlog">${backlogs} Failed</span>` 
+                    : `<span class="badge-clean">All Pass</span>`;
+
+                html += `
+                    <tr class="${rowClass}">
+                        <td class="${rankClass}">${rankDisplay}</td>
+                        <td style="font-family:monospace; letter-spacing:0.5px;">${student.pin}</td>
+                        <td>${student.name}</td>
+                        <td class="col-sgpa">${student.sgpa}</td>
+                        <td class="col-marks">${totalMarks}</td>
+                        <td>${backlogHtml}</td>
+                        <td class="col-credits">${student.credits}</td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = html;
+        } else {
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No data found. Please run Analysis first.</td></tr>`;
+        }
+
+        // 2. Excel Download Function
+        function downloadExcel() {
+            const table = document.getElementById("resultsTable");
+            let html = table.outerHTML;
+
+            // Clean up FontAwesome icons for Excel
+            html = html.replace(/<i[^>]*><\/i>/g, ""); 
+            
+            // Create Blob
+            const blob = new Blob([`
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:x='urn:schemas-microsoft-com:office:excel' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head></head>
+                <body>${html}</body></html>
+            `], { type: 'application/vnd.ms-excel' });
+
+            // Trigger Download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "Class_Results.xls";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+
+</body>
+</html>
+
