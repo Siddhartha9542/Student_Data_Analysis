@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBTET LIVE Analysis</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        :root { --bg-dark: #0f172a; --neon-blue: #00f2ff; --neon-purple: #bd00ff; --text-white: #ffffff; --glass-bg: rgba(255, 255, 255, 0.05); --glass-border: rgba(255, 255, 255, 0.1); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: radial-gradient(circle at center, #1e293b 0%, #050911 100%); height: 100vh; display: flex; justify-content: center; align-items: center; color: var(--text-white); overflow: hidden; }
+        .card { background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 20px; width: 400px; height: 500px; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(0, 0, 0, 0.5); position: relative; }
+        .input-view { width: 100%; text-align: center; transition: opacity 0.5s ease; }
+        .hidden { display: none !important; opacity: 0; pointer-events: none; }
+        h1 { font-size: 24px; margin-bottom: 40px; text-transform: uppercase; background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+        .input-group { position: relative; margin-bottom: 30px; width: 100%; }
+        label { position: absolute; top: -25px; left: 5px; font-size: 12px; color: #94a3b8; }
+        input { width: 100%; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--glass-border); padding: 15px; color: white; font-size: 16px; border-radius: 10px; outline: none; text-align: center; letter-spacing: 2px; }
+        input:focus { border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); }
+        .btn-analyze { background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue)); border: none; padding: 15px 40px; color: white; font-weight: bold; border-radius: 30px; cursor: pointer; text-transform: uppercase; width: 100%; transition: 0.2s; }
+        .btn-analyze:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(189, 0, 255, 0.5); }
+        .loading-view { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.8s ease; }
+        .circle-container { position: relative; width: 200px; height: 200px; margin-bottom: 40px; }
+        svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+        circle { fill: none; stroke-width: 8; stroke-linecap: round; }
+        .bg-ring { stroke: rgba(255, 255, 255, 0.05); }
+        .progress-ring { stroke: url(#gradientColor); stroke-dasharray: 565; stroke-dashoffset: 565; filter: drop-shadow(0 0 4px var(--neon-purple)); }
+        .percentage { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; font-weight: 300; color: white; }
+        .percentage span { font-size: 20px; color: #94a3b8; }
+        .bottom-progress-label { font-size: 10px; letter-spacing: 2px; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; }
+        .progress-bar-bg { width: 150px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--neon-purple), var(--neon-blue)); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="input-view" id="inputView">
+            <h1>SBTET LIVE</h1>
+            <div class="input-group">
+                <label>ENTER PIN</label>
+                <input type="text" id="pinInput" placeholder="23007-CS-056" autocomplete="off">
+            </div>
+            <button class="btn-analyze" onclick="startAnalysis()">Get Analysis</button>
+        </div>
+
+        <div class="loading-view hidden" id="loadingView">
+            <div class="circle-container">
+                <svg>
+                    <defs>
+                        <linearGradient id="gradientColor" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#bd00ff" />
+                            <stop offset="100%" stop-color="#00f2ff" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="100" cy="100" r="90" class="bg-ring"></circle>
+                    <circle cx="100" cy="100" r="90" class="progress-ring" id="ring"></circle>
+                </svg>
+                <div class="percentage" id="percentText">0<span>%</span></div>
+            </div>
+            <div class="bottom-progress-label" id="statusLabel">Analysing Data...</div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="barFill"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
+
