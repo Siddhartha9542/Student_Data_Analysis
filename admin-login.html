@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Access</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; margin: 0; }
+        .login-card { background: #1e293b; padding: 40px; border-radius: 20px; text-align: center; width: 90%; max-width: 350px; border: 1px solid rgba(255,255,255,0.1); }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: rgba(255,255,255,0.05); border: 1px solid #334155; color: white; border-radius: 8px; outline: none; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #00f2ff; color: #000; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+        h2 { margin-bottom: 20px; color: #00f2ff; }
+        .back-link { display: block; margin-top: 20px; color: #888; font-size: 12px; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <h2><i class="fa-solid fa-user-shield"></i> Admin Panel</h2>
+        <input type="email" id="adminEmail" placeholder="admin@gmail.com">
+        <input type="password" id="adminPass" placeholder="Password">
+        <button onclick="adminLogin()">SECURE LOGIN</button>
+        <p id="errorMsg" style="color:#ff4757; font-size:12px; margin-top:10px;"></p>
+        <a href="auth.html" class="back-link">← Back to Student Login</a>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyDpN_1iAlE6K7YEeKOt5fMnPqMo5eNodBM",
+          authDomain: "student-data-analysis-85831.firebaseapp.com",
+          projectId: "student-data-analysis-85831",
+          storageBucket: "student-data-analysis-85831.firebasestorage.app",
+          messagingSenderId: "739540856409",
+          appId: "1:739540856409:web:155e5d3efb17211aff8b48",
+          measurementId: "G-Y0VK71KDB1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        window.adminLogin = function() {
+            const email = document.getElementById('adminEmail').value;
+            const pass = document.getElementById('adminPass').value;
+            const msg = document.getElementById('errorMsg');
+            const btn = document.querySelector('button');
+
+            btn.innerText = "Checking...";
+            
+            signInWithEmailAndPassword(auth, email, pass)
+                .then((userCredential) => {
+                    // Success! Go to Admin Dashboard
+                    window.location.href = "admin.html";
+                })
+                .catch((error) => {
+                    btn.innerText = "SECURE LOGIN";
+                    msg.innerText = "Access Denied: Wrong Email or Password";
+                });
+        }
+    </script>
+</body>
+</html>
