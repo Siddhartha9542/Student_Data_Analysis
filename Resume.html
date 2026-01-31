@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
+
+        :root {
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-white: #ffffff;
+            --text-muted: #94a3b8;
+            --neon-blue: #00f2ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; 
+        }
+
+        /* --- HEADER --- */
+        .header {
+            padding: 10px 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            z-index: 100;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .back-btn { color: white; text-decoration: none; font-size: 16px; }
+        .page-title { font-size: 16px; font-weight: 600; }
+
+        .btn-download {
+            background: var(--neon-blue);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* --- MOBILE TABS (Hidden on Desktop) --- */
+        .mobile-tabs {
+            display: none; 
+            background: #1e293b;
+            padding: 10px;
+            gap: 10px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .tab-btn.active { background: var(--neon-blue); color: #000; }
+
+        /* --- MAIN LAYOUT --- */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            position: relative;
+        }
+
+        /* LEFT: EDITOR */
+        .editor-panel {
+            width: 40%;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid var(--glass-border);
+            display: flex; 
+            flex-direction: column;
+            gap: 20px;
+            padding-bottom: 100px;
+        }
+
+        .section-label { font-size: 12px; color: var(--neon-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: 600; }
+        .input-group { margin-bottom: 15px; }
+        .inp-label { font-size: 11px; color: var(--text-muted); margin-bottom: 5px; display: block; }
+        
+        .glass-input, .glass-textarea {
+            width: 100%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 10px;
+            border-radius: 8px;
+            color: white;
+            outline: none;
+            font-size: 13px;
+        }
+        .glass-textarea { resize: vertical; min-height: 80px; }
+        .locked-input { background: rgba(0,0,0,0.3); color: #666; cursor: not-allowed; }
+
+        /* RIGHT: PREVIEW */
+        .preview-panel {
+            width: 60%;
+            background: #525659; 
+            padding: 40px;
+            overflow-y: auto;
+            display: flex; 
+            justify-content: center;
+            padding-bottom: 100px;
+        }
+
+        /* --- THE RESUME PAPER (A4) --- */
+        #resumePaper {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 25mm; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            color: #000; 
+            font-family: 'Merriweather', serif;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-sizing: border-box;
+        }
+
+        /* Resume Content Styles */
+        .res-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 10px; }
+        .res-name { font-size: 22pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #000; }
+        .res-role { font-size: 12pt; color: #444; font-style: italic; margin-top: 5px; }
+        .res-contact { font-size: 10pt; margin-top: 8px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; color: #333; }
+        
+        .res-section { margin-bottom: 15px; }
+        .res-sec-title { 
+            font-size: 12pt; font-weight: 700; text-transform: uppercase; 
+            border-bottom: 1px solid #999; padding-bottom: 3px; margin-bottom: 8px; color: #000;
+        }
+
+        .res-item { margin-bottom: 10px; }
+        .res-item-title { font-size: 11pt; font-weight: 700; color: #000; }
+        .res-item-sub { font-size: 10pt; font-style: italic; color: #444; display: flex; justify-content: space-between; }
+        .res-desc { font-size: 10pt; line-height: 1.4; margin-top: 3px; color: #222; }
+
+        .res-skills-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .res-skill-tag { font-size: 9pt; background: #eee; padding: 2px 8px; border-radius: 4px; font-family: sans-serif; color: #000; border: 1px solid #ccc; }
+
+        .res-table { width: 100%; border-collapse: collapse; font-size: 10pt; color: #000; }
+        .res-table th, .res-table td { border: 1px solid #999; padding: 6px; text-align: left; }
+        .res-table th { background: #f0f0f0; font-weight: bold; }
+
+        /* --- MOBILE RESPONSIVENESS (Tabs Logic) --- */
+        @media (max-width: 900px) {
+            body { height: 100vh; overflow: hidden; }
+            .header { padding: 10px 15px; }
+            .mobile-tabs { display: flex; }
+            .main-container { height: calc(100vh - 115px); } 
+            .editor-panel { width: 100%; border: none; display: none; }
+            .preview-panel { width: 100%; padding: 15px; display: none; }
+            .editor-panel.active { display: flex; }
+            .preview-panel.active { display: flex; }
+            #resumePaper { width: 100%; min-height: auto; padding: 15px; font-size: 90%; }
+        }
+
+        @media print {
+            @page { margin: 0; size: auto; }
+            body { background: white; height: auto; overflow: visible; display: block; }
+            .header, .mobile-tabs, .editor-panel, .back-btn, .btn-download { display: none !important; }
+            .preview-panel { display: block !important; width: 100%; height: auto; background: white; padding: 0; margin: 0; overflow: visible; position: absolute; top: 0; left: 0; }
+            #resumePaper { box-shadow: none; margin: 0; width: 100%; print-color-adjust: exact; -webkit-print-color-adjust: exact; background-color: white !important; color: black !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-left">
+            <a href="dashboard.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+            <div class="page-title">Resume Gen</div>
+        </div>
+        <button class="btn-download" onclick="window.print()">
+            <i class="fa-solid fa-file-pdf"></i> Download
+        </button>
+    </div>
+
+    <div class="mobile-tabs">
+        <button class="tab-btn active" onclick="switchTab('edit', this)">Edit Details</button>
+        <button class="tab-btn" onclick="switchTab('preview', this)">View Resume</button>
+    </div>
+
+    <div class="main-container">
+
+        <div class="editor-panel active" id="editorPanel">
+            
+            <div>
+                <div class="section-label">Personal Info</div>
+                <div class="input-group"><label class="inp-label">Full Name</label><input type="text" id="inpName" class="glass-input" value="Loading..." oninput="updateResume()"></div>
+                <div class="input-group"><label class="inp-label">Branch (Auto)</label><input type="text" id="inpBranch" class="glass-input locked-input" value="..." readonly></div>
+                <div class="input-group"><label class="inp-label">Phone</label><input type="text" class="glass-input" id="inpPhone" value="..." oninput="updateResume()"></div>
+                <div class="input-group"><label class="inp-label">Email</label><input type="text" class="glass-input" id="inpEmail" value="..." oninput="updateResume()"></div>
+                <div class="input-group"><label class="inp-label">LinkedIn / Portfolio</label><input type="text" class="glass-input" id="inpLink" placeholder="linkedin.com/in/..." oninput="updateResume()"></div>
+            </div>
+
+            <div>
+                <div class="section-label">Objective</div>
+                <textarea class="glass-textarea" id="inpSummary" oninput="updateResume()">Final year Diploma student passionate about Technology. Looking for an entry-level role to utilize my skills.</textarea>
+            </div>
+
+            <div>
+                <div class="section-label">Technical Skills</div>
+                <div class="input-group"><label class="inp-label">Comma separated</label><input type="text" class="glass-input" id="inpSkills" value="Java, C, HTML, CSS, MySQL" oninput="updateResume()"></div>
+            </div>
+
+            <div>
+                <div class="section-label">Project Details</div>
+                <div class="input-group"><label class="inp-label">Project Title</label><input type="text" class="glass-input" id="inpProjTitle" value="My Project" oninput="updateResume()"></div>
+                <div class="input-group"><label class="inp-label">Description</label><textarea class="glass-textarea" id="inpProjDesc" oninput="updateResume()">Built a responsive web application using modern technologies.</textarea></div>
+            </div>
+        </div>
+
+        <div class="preview-panel" id="previewPanel">
+            <div id="resumePaper">
+                
+                <div class="res-header">
+                    <div class="res-name" id="outName">...</div>
+                    <div class="res-role" id="outBranch">Diploma in ...</div>
+                    <div class="res-contact">
+                        <span><i class="fa-solid fa-phone"></i> <span id="outPhone">...</span></span>
+                        <span><i class="fa-solid fa-envelope"></i> <span id="outEmail">...</span></span>
+                        <span><i class="fa-brands fa-linkedin"></i> <span id="outLink">...</span></span>
+                    </div>
+                </div>
+
+                <div class="res-section">
+                    <div class="res-sec-title">Objective</div>
+                    <div class="res-desc" id="outSummary">Summary goes here...</div>
+                </div>
+
+                <div class="res-section">
+                    <div class="res-sec-title">Education</div>
+                    <table class="res-table">
+                        <tr><th>Course</th><th>Institution</th><th>Year</th><th>Grade</th></tr>
+                        <tr><td id="tableBranch">Diploma</td><td>Govt Polytechnic</td><td>2023-2026</td><td><b id="tableSgpa">--</b></td></tr>
+                        <tr><td>SSC (10th)</td><td>State Board</td><td>2023</td><td>Pass</td></tr>
+                    </table>
+                </div>
+
+                <div class="res-section">
+                    <div class="res-sec-title">Technical Skills</div>
+                    <div class="res-skills-list" id="outSkills"></div>
+                </div>
+
+                <div class="res-section">
+                    <div class="res-sec-title">Projects</div>
+                    <div class="res-item">
+                        <div class="res-item-title" id="outProjTitle">Project Name</div>
+                        <div class="res-item-sub">Role: Developer</div>
+                        <div class="res-desc" id="outProjDesc">Desc...</div>
+                    </div>
+                </div>
+
+                <div class="res-section" style="margin-top:auto">
+                    <div class="res-sec-title">Declaration</div>
+                    <div class="res-desc">I hereby declare that the above details are true to the best of my knowledge.</div>
+                    <div style="margin-top:30px; display:flex; justify-content:space-between; font-weight:bold; font-size:10pt;">
+                        <div>Date: <span id="dateToday"></span></div>
+                        <div>(<span id="signName">...</span>)</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyDpN_1iAlE6K7YEeKOt5fMnPqMo5eNodBM",
+          authDomain: "student-data-analysis-85831.firebaseapp.com",
+          projectId: "student-data-analysis-85831",
+          storageBucket: "student-data-analysis-85831.firebasestorage.app",
+          messagingSenderId: "739540856409",
+          appId: "1:739540856409:web:155e5d3efb17211aff8b48",
+          measurementId: "G-Y0VK71KDB1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const userPin = localStorage.getItem("userPIN");
+
+        window.onload = async function() {
+            document.getElementById('dateToday').innerText = new Date().toLocaleDateString();
+
+            if(!userPin) {
+                alert("Please Login First");
+                window.location.href = "auth.html";
+                return;
+            }
+
+            try {
+                // 1. Fetch User Contact Details
+                const userDoc = await getDoc(doc(db, "users", userPin));
+                if(userDoc.exists()) {
+                    const data = userDoc.data();
+                    document.getElementById('inpName').value = data.name || "";
+                    document.getElementById('inpPhone').value = data.phone || "";
+                    document.getElementById('inpEmail').value = data.email || "";
+                }
+
+                // 2. Fetch Academic Details (Result Data)
+                const resultDoc = await getDoc(doc(db, "class_results", userPin));
+                if(resultDoc.exists()) {
+                    const resData = resultDoc.data();
+                    const branch = resData.branch || "Engineering";
+                    document.getElementById('inpBranch').value = "Diploma in " + branch;
+                    
+                    if(resData.avg_sgpa) {
+                        document.getElementById('tableSgpa').innerText = resData.avg_sgpa + " CGPA";
+                    }
+                }
+
+                updateResume();
+
+            } catch(e) {
+                console.error("Resume Load Error:", e);
+            }
+        };
+
+        window.switchTab = function(mode, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const editor = document.getElementById('editorPanel');
+            const preview = document.getElementById('previewPanel');
+            if(mode === 'edit') {
+                editor.classList.add('active');
+                preview.classList.remove('active');
+            } else {
+                editor.classList.remove('active');
+                preview.classList.add('active');
+            }
+        }
+
+        window.updateResume = function() {
+            // Personal
+            const name = document.getElementById('inpName').value;
+            document.getElementById('outName').innerText = name;
+            document.getElementById('signName').innerText = name;
+            document.getElementById('outBranch').innerText = document.getElementById('inpBranch').value;
+            document.getElementById('tableBranch').innerText = document.getElementById('inpBranch').value;
+            
+            // Contact
+            document.getElementById('outPhone').innerText = document.getElementById('inpPhone').value;
+            document.getElementById('outEmail').innerText = document.getElementById('inpEmail').value;
+            document.getElementById('outLink').innerText = document.getElementById('inpLink').value;
+            
+            // Content
+            document.getElementById('outSummary').innerText = document.getElementById('inpSummary').value;
+            document.getElementById('outProjTitle').innerText = document.getElementById('inpProjTitle').value;
+            document.getElementById('outProjDesc').innerText = document.getElementById('inpProjDesc').value;
+
+            // Skills
+            const skills = document.getElementById('inpSkills').value;
+            const skillBox = document.getElementById('outSkills');
+            skillBox.innerHTML = '';
+            if(skills) {
+                skills.split(',').forEach(s => {
+                    const sp = document.createElement('span');
+                    sp.className = 'res-skill-tag';
+                    sp.innerText = s.trim();
+                    skillBox.appendChild(sp);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
+
