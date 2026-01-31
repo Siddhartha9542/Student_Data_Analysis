@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBTET LIVE Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+    if (!localStorage.getItem("userPIN")) {
+        window.location.href = "index.html";
+    }
+</script>
+
+    <style>
+        /* KEEP ALL CSS EXACTLY AS IT WAS - OMITTED FOR BREVITY */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        :root { --bg-dark: #0f172a; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); --text-white: #ffffff; --text-muted: #94a3b8; --neon-blue: #00f2ff; --neon-green: #00ff9d; --neon-yellow: #ffeb3b; --neon-red: #ff0055; --neon-purple: #bd00ff; --card-radius: 16px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: radial-gradient(circle at top center, #1e293b 0%, #050911 100%); color: var(--text-white); min-height: 100vh; padding-bottom: 60px; }
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--glass-border); }
+        .logo { font-size: 18px; font-weight: 700; letter-spacing: 1px; background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .btn-logout { border: 1px solid rgba(255, 0, 85, 0.5); color: var(--neon-red); padding: 6px 14px; border-radius: 20px; font-size: 11px; cursor: pointer; text-decoration: none; transition: 0.3s; }
+        .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; display: flex; flex-direction: column; gap: 20px; }
+        @media (min-width: 900px) { .dashboard-grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; align-items: start; } .sidebar-col, .main-col { display: flex; flex-direction: column; gap: 20px; } }
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: var(--card-radius); padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .market-card { background: rgba(0, 242, 255, 0.08); border: 1px solid rgba(0, 242, 255, 0.2); backdrop-filter: blur(10px); border-radius: var(--card-radius); padding: 20px; }
+        .profile-strip { display: flex; flex-direction: column; gap: 15px; }
+        .profile-left { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #333, #666); display: flex; align-items: center; justify-content: center; border: 2px solid var(--neon-blue); color: white; font-size: 20px; }
+        .student-details h2 { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+        .student-details p { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; }
+        .profile-stats { display: flex; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px; }
+        .stat-box { text-align: center; width: 50%; }
+        .stat-box h3 { font-size: 18px; font-weight: 700; }
+        .stat-box span { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-action { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); color: white; padding: 12px; border-radius: 12px; text-align: center; text-decoration: none; font-size: 12px; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; }
+        .btn-action i { font-size: 16px; color: var(--neon-blue); }
+        .btn-action:hover { border-color: var(--neon-blue); background: rgba(0, 242, 255, 0.05); }
+        .section-title { font-size: 14px; font-weight: 600; color: var(--text-white); margin-bottom: 10px; }
+        .tools-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .tool-card { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.3s; }
+        .tool-card:hover { transform: translateX(5px); border-color: var(--neon-purple); }
+        .tool-icon { font-size: 18px; width: 30px; text-align: center; background: linear-gradient(135deg, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .tool-name { font-size: 12px; color: var(--text-muted); }
+        .chart-wrapper { position: relative; height: 280px; margin-top: 15px; margin-left: 25px; margin-bottom: 25px; }
+        .chart-bg-grid { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; z-index: 0; }
+        .grid-line { width: 100%; border-top: 1px solid rgba(255,255,255,0.05); position: relative; }
+        .grid-label { position: absolute; left: -30px; top: -6px; font-size: 10px; color: var(--text-muted); width: 25px; text-align: right; }
+        svg { position: relative; z-index: 2; width: 100%; height: 100%; overflow: visible; }
+        .market-preview { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
+        .market-item { min-width: 100px; height: 100px; background: rgba(0,0,0,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px dashed rgba(0, 242, 255, 0.4); }
+        .placeholder-text { font-size: 10px; color: rgba(255, 255, 255, 0.7); text-align: center; }
+        .btn-store { width: 100%; background: linear-gradient(90deg, #00c6ff, #0072ff); border: none; padding: 12px; border-radius: 30px; color: white; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; box-shadow: 0 5px 15px rgba(0, 198, 255, 0.3); transition: 0.3s; margin-top: 15px; font-size: 12px; }
+        @media (max-width: 899px) { .tools-grid { grid-template-columns: repeat(3, 1fr); } .tool-card { flex-direction: column; text-align: center; padding: 15px; gap: 8px; } .profile-strip { flex-direction: row; align-items: center; justify-content: space-between; } .profile-stats { width: auto; gap: 20px; background: transparent; padding: 0; } .stat-box { width: auto; } }
+        @media (max-width: 600px) { .profile-strip { flex-direction: column; align-items: flex-start; } .profile-stats { width: 100%; margin-top: 10px; background: rgba(0,0,0,0.2); padding: 10px; } .stat-box { width: 50%; } }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">SBTET LIVE</div>
+        <div class="btn-logout" onclick="localStorage.clear(); window.location.href='pin.html'">LOGOUT</div>
+    </nav>
+
+    <div class="container">
+        <div class="dashboard-grid">
+            
+            <div class="sidebar-col">
+                <div class="glass-card profile-strip">
+                    <div class="profile-left">
+                        <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                        <div class="student-details">
+                            <h2>Loading...</h2> <p>...</p>
+                        </div>
+                    </div>
+                    <div class="profile-stats">
+                        <div class="stat-box">
+                            <h3 style="color: var(--neon-blue)">-</h3> <span>SGPA</span>
+                        </div>
+                        <div class="stat-box">
+                            <h3 style="color: var(--neon-green)">-</h3> <span>CREDITS</span>
+                        </div>
+                    </div>
+                    <div class="action-row">
+                        <div onclick="window.location.href='ClassResults.html'" class="btn-action"><i class="fa-solid fa-chart-bar"></i> <span>Class Res</span></div>
+                        <div onclick="window.location.href='YourResults.html'" class="btn-action"><i class="fa-solid fa-file-lines"></i> <span>My Report</span></div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div class="section-title">Student Tools</div>
+                    <div class="tools-grid">
+                        <div class="tool-card" onclick="window.location.href='PrePaper.html'">
+                            <div class="tool-icon"><i class="fa-solid fa-book-open"></i></div><div class="tool-name">Prev Papers</div>
+                        </div>
+                        <div class="tool-card" onclick="window.location.href='Resume.html'">
+                            <div class="tool-icon"><i class="fa-solid fa-file-contract"></i></div><div class="tool-name">Resume Gen</div>
+                        </div>
+                        <div class="tool-card" onclick="window.location.href='SubGraph.html'">
+                            <div class="tool-icon"><i class="fa-solid fa-chart-pie"></i></div><div class="tool-name">Sub Analysis</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-col">
+                <div class="glass-card">
+                    <div class="section-title">Current Performance (Latest Sem)</div>
+                    <div class="chart-wrapper">
+                        <div class="chart-bg-grid">
+                            <div class="grid-line"><span class="grid-label">10.0</span></div>
+                            <div class="grid-line"><span class="grid-label">9.0</span></div>
+                            <div class="grid-line"><span class="grid-label">8.0</span></div>
+                            <div class="grid-line"><span class="grid-label">7.0</span></div>
+                            <div class="grid-line"><span class="grid-label">6.0</span></div>
+                            <div class="grid-line"><span class="grid-label">5.0</span></div>
+                        </div>
+                        <svg id="barGraph" viewBox="0 0 400 280" preserveAspectRatio="none"></svg>
+                    </div>
+                </div>
+
+                <div class="market-card">
+                    <div class="section-title" style="color: #c4f9ff; margin-bottom:15px;"><i class="fa-solid fa-store"></i> Student Market</div>
+                    <div class="market-preview">
+                        <div class="market-item"><div class="placeholder-text">Drafting<br>Kit</div></div>
+                        <div class="market-item"><div class="placeholder-text">Lab<br>Manuals</div></div>
+                        <div class="market-item"><div class="placeholder-text">Mini<br>Project</div></div>
+                    </div>
+                    <button class="btn-store" onclick="window.location.href='Marketplace.html'">Enter Student Store</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="script.js"></script>
+    
+    <script>
+        // FIXED BAR GRAPH: ORDER (Topper -> Avg -> Low -> You)
+        // LABELS: Below the chart
+        window.drawBarGraph = function(top, avg, low, mine) {
+            const svg = document.getElementById('barGraph');
+            if(!svg) return;
+            svg.innerHTML = '';
+
+            const width = 400;
+            const height = 280;
+            const barWidth = 50;
+            
+            // ORDER: Topper, Avg, Low, You
+            const data = [
+                { label: "Topper", val: parseFloat(top), color: "#22c55e" }, // Green
+                { label: "Avg", val: parseFloat(avg), color: "#3b82f6" },    // Blue
+                { label: "Low", val: parseFloat(low), color: "#ef4444" },    // Red
+                { label: "You", val: parseFloat(mine), color: "#f97316" }    // Orange
+            ];
+
+            // Scale: 4.0 to 10.0
+            const base = 4.0;
+            const range = 6.0;
+            const sectionWidth = width / 4;
+            
+            // Increase bottom margin for labels
+            const graphBottom = height - 40; 
+
+            data.forEach((item, i) => {
+                let safeVal = Math.max(item.val, base);
+                if(item.val === 0) safeVal = base; 
+                
+                const percent = (safeVal - base) / range;
+                const barH = Math.max(percent * (graphBottom * 0.9), 5); // 90% of available height
+                
+                const x = (i * sectionWidth) + (sectionWidth / 2) - (barWidth / 2);
+                const y = graphBottom - barH;
+
+                // Bar
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("x", x);
+                rect.setAttribute("y", y);
+                rect.setAttribute("width", barWidth);
+                rect.setAttribute("height", barH);
+                rect.setAttribute("fill", item.color);
+                rect.setAttribute("rx", "6");
+
+                // Value Text (Above Bar)
+                const valText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                valText.setAttribute("x", x + barWidth/2);
+                valText.setAttribute("y", y - 8);
+                valText.setAttribute("text-anchor", "middle");
+                valText.setAttribute("fill", "white");
+                valText.setAttribute("font-size", "13");
+                valText.setAttribute("font-weight", "bold");
+                valText.textContent = item.val;
+
+                // Label Text (Below the Graph Base)
+                const nameText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                nameText.setAttribute("x", x + barWidth/2);
+                nameText.setAttribute("y", graphBottom + 20); // 20px below base
+                nameText.setAttribute("text-anchor", "middle");
+                nameText.setAttribute("fill", "#94a3b8");
+                nameText.setAttribute("font-size", "11");
+                nameText.textContent = item.label;
+
+                svg.appendChild(rect);
+                svg.appendChild(valText);
+                svg.appendChild(nameText);
+            });
+        };
+    </script>
+</body>
+</html>
+
