@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subject Analysis</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        :root { 
+            --bg-dark: #0f172a; 
+            --card-bg: #1e293b; 
+            --text-white: #ffffff; 
+            --text-muted: #94a3b8; 
+            --std-green: #22c55e;
+            --std-blue: #3b82f6;
+            --std-red: #ef4444;
+            --std-orange: #f97316;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-white); min-height: 100vh; padding-bottom: 40px; }
+        
+        .header-section { padding: 15px 20px; background: rgba(15, 23, 42, 0.98); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .page-title { font-size: 16px; font-weight: 600; }
+        .btn-back { color: var(--text-muted); text-decoration: none; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+        .search-box { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 15px; display: flex; align-items: center; gap: 10px; }
+        .search-input { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 13px; }
+        
+        .grid-container { max-width: 1000px; margin: 20px auto; padding: 0 15px; display: grid; gap: 20px; grid-template-columns: 1fr; }
+        @media (min-width: 768px) { .grid-container { grid-template-columns: 1fr 1fr; } }
+        
+        .graph-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; height: 350px; display: flex; flex-direction: column; }
+        .subject-title { text-align: center; font-size: 14px; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+        .chart-container { flex-grow: 1; position: relative; margin-top: 10px; width: 100%; }
+        svg { width: 100%; height: 100%; display: block; overflow: visible; }
+        
+        .axis-text { font-size: 10px; fill: #64748b; text-anchor: end; alignment-baseline: middle; }
+        .bar-val { font-size: 11px; fill: white; font-weight: bold; text-anchor: middle; }
+        .bar-lbl { font-size: 10px; fill: #94a3b8; text-anchor: middle; }
+    </style>
+</head>
+<body>
+    <div class="header-section">
+        <div class="nav-top">
+            <div class="page-title">SUBJECT ANALYSIS</div>
+            <a href="dashboard.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        </div>
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass" style="color:#666"></i>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search subjects...">
+        </div>
+    </div>
+
+    <div class="grid-container" id="gridContainer"></div>
+
+    <script>
+        const rawData = localStorage.getItem("subject_stats");
+        const container = document.getElementById('gridContainer');
+        let subjects = [];
+        if(rawData) subjects = JSON.parse(rawData);
+
+        function render(filter = "") {
+            container.innerHTML = "";
+            subjects.forEach(sub => {
+                if(sub.name.toLowerCase().includes(filter.toLowerCase())) {
+                    createGraphCard(sub);
+                }
+            });
+            if(subjects.length === 0) container.innerHTML = "<div style='color:#666; text-align:center; padding:20px;'>No subject data found. Run Analysis first.</div>";
+        }
+
+        function createGraphCard(data) {
+            const card = document.createElement('div');
+            card.className = 'graph-card';
+            const svgContent = drawChart(data);
+            card.innerHTML = `<div class="subject-title">${data.name}</div><div class="chart-container">${svgContent}</div>`;
+            container.appendChild(card);
+        }
+
+        function drawChart(data) {
+            const w = 350;
+            const h = 250;
+            const margin = { top: 20, right: 10, bottom: 30, left: 35 }; // Increased left margin for Y-axis
+            const graphH = h - margin.top - margin.bottom;
+            const graphW = w - margin.left - margin.right;
+            const barW = 30;
+            
+            // ORDER: Topper, Avg, Low, You
+            const items = [
+                { l: "Top", v: data.top, c: "var(--std-green)" },
+                { l: "Avg", v: data.avg, c: "var(--std-blue)" },
+                { l: "Low", v: data.low, c: "var(--std-red)" },
+                { l: "You", v: data.mine, c: "var(--std-orange)" }
+            ];
+
+            let svg = `<svg viewBox="0 0 ${w} ${h}">`;
+            
+            // --- DRAW Y-AXIS (4.0 to 10.0 scale for better visibility) ---
+            // Assuming max marks is 100, let's scale 0 to 100 for subjects
+            // Actually subjects are usually out of 100.
+            const maxVal = 100;
+            const steps = 5; // 0, 20, 40, 60, 80, 100
+            
+            for(let i=0; i<=steps; i++) {
+                const val = Math.round((maxVal / steps) * i);
+                const y = margin.top + graphH - ((val / maxVal) * graphH);
+                
+                // Grid line
+                svg += `<line x1="${margin.left}" y1="${y}" x2="${w-margin.right}" y2="${y}" stroke="#334155" stroke-width="0.5" stroke-dasharray="3"/>`;
+                // Label
+                svg += `<text x="${margin.left - 5}" y="${y}" class="axis-text">${val}</text>`;
+            }
+
+            // --- DRAW BARS ---
+            const stepX = graphW / 4;
+            const yBase = margin.top + graphH;
+
+            items.forEach((item, i) => {
+                const barHeight = (item.v / maxVal) * graphH;
+                const x = margin.left + (i * stepX) + (stepX/2) - (barW/2);
+                const y = yBase - barHeight;
+
+                // Rect
+                svg += `<rect x="${x}" y="${y}" width="${barW}" height="${barHeight}" fill="${item.c}" rx="4" />`;
+                // Value
+                svg += `<text x="${x + barW/2}" y="${y - 5}" class="bar-val">${Math.round(item.v)}</text>`;
+                // Label
+                svg += `<text x="${x + barW/2}" y="${yBase + 15}" class="bar-lbl">${item.l}</text>`;
+            });
+
+            svg += `</svg>`;
+            return svg;
+        }
+
+        render();
+        document.getElementById('searchInput').addEventListener('input', (e) => render(e.target.value));
+    </script>
+</body>
+</html>
+
