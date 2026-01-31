@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Academic Report</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-white: #ffffff;
+            --neon-purple: #bd00ff;
+            --neon-green: #00ff9d;
+            --neon-red: #ff0055;
+            --neon-blue: #00f2ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            padding: 15px 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .back-btn { color: white; text-decoration: none; font-size: 18px; }
+        .page-title { font-weight: 600; font-size: 16px; }
+
+        /* --- INFO CARD --- */
+        .student-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+            border: 1px solid var(--glass-border);
+            margin: 20px;
+            padding: 25px;
+            border-radius: 16px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .student-card::before {
+            content: '';
+            position: absolute;
+            top: -50px; right: -50px;
+            width: 100px; height: 100px;
+            background: var(--neon-purple);
+            filter: blur(60px);
+            opacity: 0.2;
+        }
+        
+        .st-name { font-size: 18px; font-weight: 700; color: var(--neon-blue); text-transform: uppercase; letter-spacing: 1px; }
+        .st-pin { font-size: 13px; color: #94a3b8; margin-top: 5px; font-family: monospace; letter-spacing: 1px; }
+        .st-meta { font-size: 11px; color: #64748b; margin-top: 8px; display: flex; justify-content: center; gap: 15px; }
+        .st-badge { background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 10px; }
+
+        /* --- SEMESTER TABLES --- */
+        .sem-title {
+            margin: 30px 20px 10px 20px;
+            color: var(--neon-purple);
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sem-title::after {
+            content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1);
+        }
+
+        .table-wrapper {
+            margin: 0 20px;
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: #1e293b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(189, 0, 255, 0.08);
+            color: #e2e8f0;
+            padding: 12px;
+            font-size: 11px;
+            text-align: center;
+            white-space: nowrap;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        th:first-child, td:first-child { text-align: left; padding-left: 15px; min-width: 150px; }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            color: #cbd5e1;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .grade-badge { font-weight: 700; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+        .grade-pass { color: var(--neon-green); background: rgba(0, 255, 157, 0.1); }
+        .grade-fail { color: var(--neon-red); background: rgba(255, 0, 85, 0.1); }
+
+        /* --- FOOTER SGPA --- */
+        .footer-sgpa {
+            margin: 0 20px;
+            background: rgba(15, 23, 42, 0.8);
+            border-left: 1px solid var(--glass-border);
+            border-right: 1px solid var(--glass-border);
+            border-bottom: 1px solid var(--glass-border);
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sgpa-label { font-size: 12px; color: var(--text-muted); }
+        .sgpa-val { font-size: 18px; font-weight: 700; color: white; }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="dashboard.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="page-title">My Academic Report</div>
+    </div>
+
+    <div class="student-card">
+        <div class="st-name" id="stName">Loading...</div>
+        <div class="st-pin" id="stPin">...</div>
+        <div class="st-meta">
+            <span class="st-badge" id="stBranch">...</span>
+            <span class="st-badge" id="stCredits" style="color:var(--neon-green)">0 Credits</span>
+        </div>
+    </div>
+
+    <div id="tablesContainer" style="padding-bottom: 50px;"></div>
+
+    <script>
+        // 1. Read Data
+        const historyRaw = localStorage.getItem("my_detailed_history");
+        const pin = localStorage.getItem("user_pin");
+        const leaderboardRaw = localStorage.getItem("leaderboard_data");
+        
+        const container = document.getElementById('tablesContainer');
+
+        // 2. Load Basic Info
+        let me = { name: "Student", branch: "GEN", credits: 0 };
+        if(leaderboardRaw) {
+            const list = JSON.parse(leaderboardRaw);
+            const found = list.find(s => s.pin === pin);
+            if(found) me = found;
+        }
+
+        document.getElementById('stName').innerText = me.name;
+        document.getElementById('stPin').innerText = pin;
+        document.getElementById('stBranch').innerText = me.branch;
+        document.getElementById('stCredits').innerText = me.credits + " Credits";
+
+        // 3. Render Tables
+        if(historyRaw) {
+            const history = JSON.parse(historyRaw);
+            let fullHtml = "";
+            let hasData = false;
+
+            history.forEach(semData => {
+                if(semData.report && semData.report.length > 0) {
+                    hasData = true;
+                    let rows = "";
+                    
+                    semData.report.forEach(sub => {
+                        const grade = sub.HybridGrade || "-";
+                        const isFail = (grade === 'F' || grade === 'Ab');
+                        const gradeClass = isFail ? 'grade-fail' : 'grade-pass';
+                        
+                        rows += `
+                            <tr>
+                                <td style="text-align:left; font-weight:500;">${sub.SubjectName || '-'}</td>
+                                <td>${sub.MID1_MARKS || '-'}</td>
+                                <td>${sub.MID2_MARKS || '-'}</td>
+                                <td>${sub.Internal_MARKS || '-'}</td>
+                                <td>${sub.EndSemMarks || '-'}</td>
+                                <td style="font-weight:700;">${sub.SubjectTotal || '-'}</td>
+                                <td><span class="grade-badge ${gradeClass}">${grade}</span></td>
+                            </tr>
+                        `;
+                    });
+
+                    fullHtml += `
+                        <div class="sem-title">SEMESTER ${semData.sem}</div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left;">Subject</th>
+                                        <th>M1</th> <th>M2</th> <th>Int</th> <th>End</th> <th>Tot</th> <th>Gr</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                        <div class="footer-sgpa">
+                            <div class="sgpa-label">SGPA</div>
+                            <div class="sgpa-val" style="color:${semData.sgpa >= 8 ? 'var(--neon-green)' : 'white'}">${semData.sgpa}</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            if(hasData) {
+                container.innerHTML = fullHtml;
+            } else {
+                container.innerHTML = "<div style='text-align:center; padding:40px; color:#666;'>No subjects found.</div>";
+            }
+        } else {
+            container.innerHTML = "<div style='text-align:center; padding:40px; color:#666;'>No data found. Please run Analysis.</div>";
+        }
+    </script>
+</body>
+</html>
+
