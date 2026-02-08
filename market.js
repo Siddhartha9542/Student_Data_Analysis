@@ -1,22 +1,3 @@
-// ==========================================
-// SECURITY GATEKEEPER
-// ==========================================
-(function() {
-    // 1. Check if we are on the Login Page (index.html or auth.html)
-    const path = window.location.pathname;
-    const isLoginPage = path.includes('index.html') || path.includes('auth.html') || path === '/';
-
-    // 2. Check if User is Logged In
-    const userPin = localStorage.getItem("userPIN"); // OR "user_pin" depending on your storage key
-
-    // 3. Logic:
-    // If we are NOT on the login page AND we don't have a PIN...
-    if (!isLoginPage && !userPin) {
-        console.warn("Unauthorized Access! Redirecting...");
-        window.location.href = "index.html"; // Kick them out!
-    }
-})();
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, getDoc, doc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -99,7 +80,8 @@ window.loadMarketplace = async function() {
             const item = doc.data();
             const card = document.createElement('div');
             card.className = 'item-card';
-            card.onclick = () => window.location.href = `contact.html?id=${doc.id}`; 
+            // Points to Contact.html which now has the fixed WhatsApp logic
+            card.onclick = () => window.location.href = `Contact.html?id=${doc.id}`; 
             
             card.innerHTML = `
                 <div class="item-img-box">
@@ -128,7 +110,7 @@ window.loadMarketplace = async function() {
 window.submitAd = async function() {
     if (!currentUserPIN) {
         alert("Please login first!");
-        window.location.href = "auth.html";
+        window.location.href = "index.html"; // Redirect to your main login page
         return;
     }
 
@@ -149,10 +131,26 @@ window.submitAd = async function() {
     submitBtn.disabled = true;
 
     try {
-        // 1. Get Phone
+        // 1. Fetch User Data to get Phone
         const userDocRef = doc(db, "users", currentUserPIN);
         const userSnap = await getDoc(userDocRef);
-        let sellerPhone = userSnap.exists() ? (userSnap.data().phone || "") : "";
+        
+        let sellerPhone = "";
+        if (userSnap.exists()) {
+            sellerPhone = userSnap.data().phone || "";
+        }
+
+        // --- VALIDATION: BLOCK SUBMISSION IF NO PHONE ---
+        // Removes non-digit chars and checks length
+        const cleanPhone = sellerPhone.toString().replace(/\D/g, '');
+        
+        if (!sellerPhone || cleanPhone.length < 10) {
+            alert("⚠️ Cannot Post Ad:\nYour profile is missing a valid Phone Number.\nBuyers need this to contact you on WhatsApp.\n\nPlease contact Admin to update your profile.");
+            submitBtn.innerText = "SUBMIT AD";
+            submitBtn.disabled = false;
+            return; // STOP EXECUTION HERE
+        }
+        // ------------------------------------------------
 
         // 2. Upload to Supabase
         submitBtn.innerText = "Uploading Image...";
@@ -166,7 +164,7 @@ window.submitAd = async function() {
 
         if (error) throw new Error("Supabase Upload Failed: " + error.message);
 
-        // 3. Get URL
+        // 3. Get Public URL
         const { data: publicURLData } = supabase.storage
             .from('market-images')
             .getPublicUrl(fileName);
@@ -182,7 +180,7 @@ window.submitAd = async function() {
             image_url: publicURLData.publicUrl,
             seller_pin: currentUserPIN,
             seller_name: currentUserName || "Student",
-            seller_phone: sellerPhone,
+            seller_phone: sellerPhone, // Guaranteed to exist now
             status: "pending",
             timestamp: serverTimestamp()
         });
