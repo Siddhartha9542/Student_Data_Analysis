@@ -7,312 +7,93 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-        :root {
-            --bg-dark: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --text-white: #ffffff;
-            --text-muted: #94a3b8;
-            --neon-blue: #00f2ff;
-            --card-radius: 12px;
-        }
-
+        :root { --bg-dark: #0f172a; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); --text-white: #ffffff; --text-muted: #94a3b8; --neon-blue: #00f2ff; --card-radius: 12px; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        
         html { scroll-behavior: smooth; }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-white);
-            min-height: 100vh;
-        }
-
-        /* --- STICKY HEADER --- */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px 5%;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .logo {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--neon-blue);
-            text-decoration: none;
-            letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .search-box {
-            background: rgba(255,255,255,0.05);
-            border-radius: 20px;
-            padding: 8px 15px;
-            display: flex;
-            align-items: center;
-            border: 1px solid var(--glass-border);
-        }
+        body { background-color: var(--bg-dark); color: var(--text-white); min-height: 100vh; }
         
-        .search-input {
-            background: transparent;
-            border: none;
-            outline: none;
-            color: white;
-            font-size: 12px;
-            width: 120px;
-        }
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 15px 5%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--glass-border); }
+        .logo { font-size: 16px; font-weight: 700; color: var(--neon-blue); text-decoration: none; display: flex; align-items: center; gap: 10px; }
         
-        .btn-bell {
-            position: relative;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--glass-border);
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-white);
-            cursor: pointer;
-            transition: 0.3s;
-        }
+        .header-right { display: flex; align-items: center; gap: 15px; position: relative; }
+        .btn-bell { position: relative; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-white); cursor: pointer; transition: 0.3s; }
         .btn-bell:hover { color: var(--neon-blue); border-color: var(--neon-blue); }
+        
+        /* Red Dot Notification */
+        .notif-dot { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background: #ff0055; border-radius: 50%; border: 2px solid var(--bg-dark); display: none; }
+        .notif-dot.active { display: block; }
 
-        /* --- LAYOUT CONTAINER --- */
-        .main-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* --- NAVIGATION --- */
-        .nav-menu {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-            white-space: nowrap;
-            position: sticky;
-            top: 70px;
-            z-index: 900;
-            background: var(--bg-dark);
-            padding-top: 5px;
-        }
+        /* Notification Dropdown */
+        .notif-dropdown { position: absolute; top: 45px; right: 0; width: 300px; background: #1e293b; border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); display: none; flex-direction: column; overflow: hidden; max-height: 300px; overflow-y: auto; }
+        .notif-dropdown.show { display: flex; }
+        .notif-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; color: #ccc; cursor: pointer; transition: 0.2s; }
+        .notif-item:hover { background: rgba(255,255,255,0.05); }
+        .notif-item.unread { background: rgba(0, 242, 255, 0.05); border-left: 3px solid var(--neon-blue); color: white; }
+        
+        .main-container { max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        
+        .nav-menu { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; white-space: nowrap; position: sticky; top: 70px; z-index: 900; background: var(--bg-dark); padding-top: 5px; }
         .nav-menu::-webkit-scrollbar { height: 0px; } 
-
-      .nav-item {
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    text-decoration: none;
-    color: var(--text-muted);
-    border: 1px solid var(--glass-border);
-    background: rgba(255,255,255,0.02);
-    transition: 0.3s;
-    display: inline-block;
-    cursor: pointer;
-    
-    /* ADD THIS LINE TO STOP SQUISHING */
-    flex-shrink: 0; 
-}
-
-        .nav-item:hover, .nav-item.active {
-            color: white;
-            border-color: rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.05);
-        }
-
-        .nav-item.btn-sell {
-            background: linear-gradient(90deg, #00c6ff, #0072ff);
-            color: white;
-            border: none;
-            font-weight: 600;
-            box-shadow: 0 4px 10px rgba(0, 198, 255, 0.3);
-        }
-
-        /* --- CONTENT AREA --- */
-        .content-area {
-            flex-grow: 1;
-            padding-bottom: 50px;
-            min-height: 300px;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: white;
-            border-left: 4px solid var(--neon-blue);
-            padding-left: 10px;
-        }
-
-        /* --- DYNAMIC GRID --- */
-        .item-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Mobile: 2 items */
-            gap: 15px;
-        }
-
-        /* --- ITEM CARD --- */
-        .item-card {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--card-radius);
-            overflow: hidden;
-            transition: 0.3s;
-            text-decoration: none;
-            display: block;
-            cursor: pointer;
-            animation: fadeIn 0.5s ease;
-        }
-        .item-card:hover {
-            transform: translateY(-3px);
-            border-color: var(--neon-blue);
-        }
-
-        .item-img-box {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1/1;
-            background: #1e293b;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
+        .nav-item { padding: 8px 16px; border-radius: 20px; font-size: 12px; text-decoration: none; color: var(--text-muted); border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); transition: 0.3s; display: inline-block; cursor: pointer; flex-shrink: 0; }
+        .nav-item:hover, .nav-item.active { color: white; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); }
         
-        .item-img-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .btn-sell { background: linear-gradient(90deg, #00c6ff, #0072ff); color: white; border: none; font-weight: 600; box-shadow: 0 4px 10px rgba(0, 198, 255, 0.3); }
+        .btn-my-ads { background: rgba(189, 0, 255, 0.2); color: #eebbff; border-color: rgba(189, 0, 255, 0.4); }
 
-        .price-tag {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            color: var(--neon-blue);
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(0, 242, 255, 0.3);
-        }
+        .content-area { flex-grow: 1; padding-bottom: 50px; min-height: 300px; }
+        .section-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; color: white; border-left: 4px solid var(--neon-blue); padding-left: 10px; }
+        .item-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
 
+        .item-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--card-radius); overflow: hidden; transition: 0.3s; text-decoration: none; display: block; cursor: pointer; animation: fadeIn 0.5s ease; }
+        .item-card:hover { transform: translateY(-3px); border-color: var(--neon-blue); }
+        .item-img-box { position: relative; width: 100%; aspect-ratio: 1/1; background: #1e293b; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .item-img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .price-tag { position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); color: var(--neon-blue); font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(0, 242, 255, 0.3); }
         .item-info { padding: 10px; }
-        
-        .item-title {
-            font-size: 12px;
-            color: var(--text-white);
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .item-loc {
-            font-size: 10px;
-            color: var(--text-muted);
-            margin-top: 2px;
-            text-transform: capitalize;
-        }
+        .item-title { font-size: 12px; color: var(--text-white); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-loc { font-size: 10px; color: var(--text-muted); margin-top: 2px; text-transform: capitalize; }
+        .date-badge { position: absolute; top: 8px; left: 8px; background: rgba(255, 153, 0, 0.9); color: black; font-size: 9px; padding: 3px 6px; border-radius: 4px; font-weight: 700; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* --- DESKTOP STYLES --- */
-        @media (min-width: 900px) {
-            .main-container {
-                flex-direction: row;
-                align-items: flex-start;
-                gap: 30px;
-            }
-            .nav-menu {
-                flex-direction: column;
-                width: 250px;
-                position: sticky;
-                top: 90px;
-                background: transparent;
-                padding: 0;
-            }
-            .item-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-            .search-input { width: 300px; font-size: 14px; }
-        }
-
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (min-width: 900px) { .main-container { flex-direction: row; align-items: flex-start; gap: 30px; } .nav-menu { flex-direction: column; width: 250px; position: sticky; top: 90px; background: transparent; padding: 0; } .item-grid { grid-template-columns: repeat(4, 1fr); } }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <a href="dashboard.html" class="logo">
-            <i class="fa-solid fa-arrow-left"></i>
-            MARKET
-        </a>
+        <a href="dashboard.html" class="logo"><i class="fa-solid fa-arrow-left"></i> MARKET</a>
         <div class="header-right">
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass" style="color:#666; font-size:12px; margin-right:8px;"></i>
-                <input type="text" class="search-input" placeholder="Search items...">
-            </div>
-            <div class="btn-bell" onclick="alert('Notification System coming in V2')">
+            <div class="btn-bell" onclick="toggleNotifs()">
                 <i class="fa-regular fa-bell"></i>
+                <div class="notif-dot" id="notifDot"></div>
+            </div>
+            <div class="notif-dropdown" id="notifList">
+                <div style="padding:15px; text-align:center; color:#666;">No new notifications</div>
             </div>
         </div>
     </div>
 
     <div class="main-container">
-
        <nav class="nav-menu">
-    <a href="SellRent.html" class="nav-item btn-sell">
-        <i class="fa-solid fa-plus"></i> SELL / RENT
-    </a>
-    <div class="nav-item active"><i class="fa-solid fa-fire"></i> Fresh Arrivals</div>
-    <div class="nav-item"><i class="fa-solid fa-book"></i> Books</div>
-    <div class="nav-item"><i class="fa-solid fa-microchip"></i> Projects</div>
-    <div class="nav-item"><i class="fa-solid fa-plug"></i> Electronics</div>
-    <div class="nav-item"><i class="fa-solid fa-gift"></i> Giveaway</div>
-</nav>
+            <a href="SellRent.html" class="nav-item btn-sell"><i class="fa-solid fa-plus"></i> SELL / RENT</a>
+            <a href="MyAds.html" class="nav-item btn-my-ads"><i class="fa-solid fa-list-check"></i> My Ads</a>
+            <div class="nav-item active"><i class="fa-solid fa-fire"></i> Fresh Arrivals</div>
+            <div class="nav-item"><i class="fa-solid fa-book"></i> Books</div>
+            <div class="nav-item"><i class="fa-solid fa-microchip"></i> Projects</div>
+            <div class="nav-item"><i class="fa-solid fa-plug"></i> Electronics</div>
+            <div class="nav-item"><i class="fa-solid fa-gift"></i> Giveaway</div>
+        </nav>
 
         <div class="content-area">
             <div class="section-title">Latest Listings</div>
-            
             <div class="item-grid" id="marketContainer">
                 <div style="grid-column: span 2; text-align: center; color: #666; padding: 40px;">
                     <i class="fa-solid fa-circle-notch fa-spin"></i> Loading Market...
                 </div>
             </div>
         </div>
-
     </div>
 
-    <script type="module">
-        import './market.js';
-        // Auto-run logic is handled inside market.js
-    </script>
-
+    <script type="module" src="market.js"></script>
 </body>
 </html>
-
