@@ -5,37 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-        <style>
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
         :root { --bg-dark: #0f172a; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); --neon-blue: #00f2ff; --neon-green: #00ff9d; }
         * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
         
         body { background: var(--bg-dark); color: white; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Desktop Layout */
         .sidebar { width: 250px; padding: 30px; border-right: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); display: flex; flex-direction: column; }
         .main-content { flex: 1; padding: 40px; overflow-y: auto; }
 
-        /* Mobile Layout (Responsive) */
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            .sidebar { 
-                width: 100%; 
-                height: 60px; 
-                flex-direction: row; 
-                align-items: center; 
-                justify-content: space-between; 
-                padding: 10px 20px;
-                border-bottom: 1px solid var(--glass-border);
-                border-right: none;
-            }
+            .sidebar { width: 100%; height: 60px; flex-direction: row; align-items: center; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid var(--glass-border); border-right: none; }
             .sidebar h3 { font-size: 16px; margin: 0 !important; }
-            .sidebar div { display: none; } /* Hide extra text on mobile */
+            .sidebar div { display: none; }
             .logout-btn { margin: 0 !important; font-size: 12px; }
             .main-content { padding: 15px; }
         }
         
-        /* List Items */
         .admin-row { display: flex; align-items: center; justify-content: space-between; background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
         .row-thumb { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; margin-right: 15px; background: #333; flex-shrink: 0; }
         .row-info { flex: 1; overflow: hidden; }
@@ -46,15 +34,13 @@
         .check { background: rgba(0, 255, 157, 0.15); color: var(--neon-green); }
         .cross { background: rgba(255, 0, 85, 0.15); color: #ff0055; }
     </style>
-
 </head>
 <body>
 
     <div class="sidebar">
         <h3 style="color:var(--neon-blue); margin-bottom:10px;">ADMIN PANEL</h3>
         <div style="opacity:0.6; font-size:12px; margin-bottom: 40px;">Super User Access</div>
-        
-        <div class="logout-btn" onclick="localStorage.clear(); window.location.href='auth.html'">
+        <div class="logout-btn" onclick="logoutAdmin()">
             <i class="fa-solid fa-right-from-bracket"></i> Logout
         </div>
     </div>
@@ -64,18 +50,13 @@
         <div id="pendingAdsList">
             <div style="padding:20px; text-align:center; color:#666;">Loading data...</div>
         </div>
-
-        <h2 style="margin-top: 50px; border-color: #ff0055;">Active Reports</h2>
-        <div id="reportsList">
-            <div style="padding:20px; color:#666; font-size:13px;">No active reports found.</div>
-        </div>
     </div>
-      <script type="module">
+
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, addDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
-        // --- CONFIGURATION ---
         const firebaseConfig = {
           apiKey: "AIzaSyDpN_1iAlE6K7YEeKOt5fMnPqMo5eNodBM",
           authDomain: "student-data-analysis-85831.firebaseapp.com",
@@ -89,35 +70,22 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-
-        // --- 1. NEW SECURITY CHECK (Gmail Based) ---
-        // REPLACE THIS WITH YOUR EXACT EMAIL
         const ADMIN_EMAIL = "yatasiddhartha33@gmail.com"; 
 
         onAuthStateChanged(auth, (user) => {
             if (user && user.email === ADMIN_EMAIL) {
-                // User is logged in AND is the correct Admin
                 console.log("Admin Authorized");
-                loadPendingItems(); // Load the data
+                loadPendingItems();
             } else {
-                // Not logged in OR wrong email
                 alert("ACCESS DENIED: Restricted Area");
-                window.location.href = "admin-login.html"; // Kick them out
+                window.location.href = "admin-login.html";
             }
         });
 
-        // Logout Function
         window.logoutAdmin = function() {
-            signOut(auth).then(() => {
-                window.location.href = "admin-login.html";
-            });
+            signOut(auth).then(() => { window.location.href = "admin-login.html"; });
         }
-        
-        // Connect the HTML logout button to this function
-        document.querySelector('.logout-btn').onclick = logoutAdmin;
 
-
-        // --- 2. LOAD DATA FUNCTION (Same as before) ---
         async function loadPendingItems() {
             const listContainer = document.getElementById('pendingAdsList');
             listContainer.innerHTML = '<div style="padding:20px; text-align:center;">Scanning for new items...</div>';
@@ -126,22 +94,24 @@
             let count = 0;
 
             try {
-                // A. Fetch Pending ADS
+                // 1. Fetch Market Items
                 const qAds = query(collection(db, "market_items"), where("status", "==", "pending"));
                 const adsSnap = await getDocs(qAds);
                 adsSnap.forEach(doc => {
                     const data = doc.data();
                     count++;
-                    html += createRowHTML(data, doc.id, 'market_items', data.title, data.image_url);
+                    // We pass seller_pin and title for notifications
+                    html += createRowHTML(data, doc.id, 'market_items', data.title, data.image_url, false, data.seller_pin);
                 });
 
-                // B. Fetch Pending PAPERS
+                // 2. Fetch Papers
                 const qPapers = query(collection(db, "papers"), where("status", "==", "pending"));
                 const papersSnap = await getDocs(qPapers);
                 papersSnap.forEach(doc => {
                     const data = doc.data();
                     count++;
-                    html += createRowHTML(data, doc.id, 'papers', data.subject, null, true);
+                    // We pass uploader_pin and subject for notifications
+                    html += createRowHTML(data, doc.id, 'papers', data.subject, null, true, data.uploader_pin);
                 });
 
                 listContainer.innerHTML = count === 0 
@@ -154,13 +124,15 @@
             }
         }
 
-        // Helper to generate HTML
-        function createRowHTML(data, id, collection, title, img, isPaper = false) {
+        function createRowHTML(data, id, collection, title, img, isPaper, userPin) {
             const icon = isPaper 
                 ? `<div class="row-thumb" style="display:flex;align-items:center;justify-content:center;background:#ff4757;"><i class="fa-solid fa-file-pdf"></i></div>`
                 : `<img src="${img}" class="row-thumb" onclick="window.open('${img}')">`;
             
             const link = isPaper ? `<a href="${data.pdf_url}" target="_blank" style="color:#00f2ff;font-size:11px;">View PDF</a>` : '';
+
+            // Clean Title for function call (remove quotes)
+            const cleanTitle = (title || "Item").replace(/'/g, "").replace(/"/g, "");
 
             return `
                 <div class="admin-row">
@@ -169,32 +141,57 @@
                         <div class="row-title">${title}</div>
                         <div class="row-sub">${collection.toUpperCase()} | ${link}</div>
                     </div>
-                    <button class="btn-icon check" onclick="handleDecision('${collection}', '${id}', 'approve')"><i class="fa-solid fa-check"></i></button>
-                    <button class="btn-icon cross" onclick="handleDecision('${collection}', '${id}', 'reject')"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn-icon check" onclick="handleDecision('${collection}', '${id}', 'approve', '${userPin}', '${cleanTitle}')"><i class="fa-solid fa-check"></i></button>
+                    <button class="btn-icon cross" onclick="handleDecision('${collection}', '${id}', 'reject', '${userPin}', '${cleanTitle}')"><i class="fa-solid fa-trash"></i></button>
                 </div>
             `;
         }
 
-        // --- 3. DECISION LOGIC ---
-        window.handleDecision = async function(collectionName, docId, action) {
+        window.handleDecision = async function(collectionName, docId, action, userPin, title) {
             const btn = event.currentTarget;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
+            
+            let reason = "";
+            if(action === 'reject') {
+                reason = prompt("Reason for rejection (Optional):", "Violation of terms");
+                if(reason === null) { // Cancelled
+                    loadPendingItems();
+                    return;
+                }
+            }
+
             try {
                 const docRef = doc(db, collectionName, docId);
+                let notifMsg = "";
+                let notifType = "";
+
                 if (action === 'approve') {
                     await updateDoc(docRef, { status: "approved" });
+                    notifMsg = `✅ Your upload "${title}" has been approved and is now live!`;
+                    notifType = "success";
                 } else {
                     await deleteDoc(docRef);
+                    notifMsg = `❌ Your upload "${title}" was rejected. Reason: ${reason || "Admin Decision"}`;
+                    notifType = "error";
                 }
-                loadPendingItems(); // Refresh
+
+                // --- SEND NOTIFICATION ---
+                if(userPin) {
+                    await addDoc(collection(db, "notifications"), {
+                        recipient_pin: userPin,
+                        message: notifMsg,
+                        type: notifType,
+                        is_read: false,
+                        timestamp: serverTimestamp()
+                    });
+                }
+
+                loadPendingItems(); // Refresh List
             } catch (error) {
                 console.error(error);
                 alert("Error: " + error.message);
             }
         }
     </script>
-
-
 </body>
 </html>
-
