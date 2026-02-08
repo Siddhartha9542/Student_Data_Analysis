@@ -132,7 +132,7 @@
         </div>
     </div>
 
-    <script type="module">
+        <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
@@ -148,13 +148,38 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        
+        // 1. Get URL Params and User PIN
         const urlParams = new URLSearchParams(window.location.search);
         const itemId = urlParams.get('id');
         const userPin = localStorage.getItem("userPIN");
 
-        window.onload = function() {
-            if (!itemId) { document.getElementById('debugLog').innerText="No Item ID"; document.getElementById('debugLog').style.display='block'; } 
-            else { loadItemData(itemId); }
+        // Store Buyer Info globally
+        let buyerInfo = { name: "A Student", phone: "" };
+
+        window.onload = async function() {
+            if (!itemId) { 
+                document.getElementById('debugLog').innerText="No Item ID"; 
+                document.getElementById('debugLog').style.display='block'; 
+                return;
+            }
+            
+            // 2. Load Item Data (Seller Info)
+            await loadItemData(itemId);
+
+            // 3. Load Current User Data (Buyer Info)
+            if(userPin) {
+                try {
+                    const userSnap = await getDoc(doc(db, "users", userPin));
+                    if(userSnap.exists()) {
+                        const data = userSnap.data();
+                        buyerInfo = {
+                            name: data.name || "Student",
+                            phone: data.phone || ""
+                        };
+                    }
+                } catch(e) { console.error("Could not fetch buyer info", e); }
+            }
         };
 
         async function loadItemData(id) {
@@ -162,7 +187,10 @@
                 const docSnap = await getDoc(doc(db, "market_items", id));
                 if (docSnap.exists()) { renderUI(docSnap.data()); } 
                 else { document.getElementById('itemTitle').innerText = "Item Deleted"; }
-            } catch (e) { document.getElementById('debugLog').innerText=e.message; document.getElementById('debugLog').style.display='block'; }
+            } catch (e) { 
+                document.getElementById('debugLog').innerText=e.message; 
+                document.getElementById('debugLog').style.display='block'; 
+            }
         }
 
         function renderUI(data) {
@@ -172,18 +200,51 @@
             document.getElementById('itemType').innerText = data.type || "SELL";
             document.getElementById('sellerName').innerText = data.seller_name || "Unknown";
             document.getElementById('sellerPin').innerText = data.seller_pin || "--";
-            if(data.timestamp) document.getElementById('itemDate').innerText = "Posted " + data.timestamp.toDate().toLocaleDateString();
-            if(data.image_url) { document.getElementById('itemImg').src = data.image_url; document.getElementById('itemImg').style.display = 'block'; }
+            
+            // Format Date
+            if(data.timestamp) {
+                document.getElementById('itemDate').innerText = "Posted " + data.timestamp.toDate().toLocaleDateString();
+            }
+
+            // Image Handling
+            if(data.image_url) { 
+                document.getElementById('itemImg').src = data.image_url; 
+                document.getElementById('itemImg').style.display = 'block'; 
+            }
+
+            // Save data for the button click
             window.currentItem = data;
         }
 
+        // --- THE FIXED WHATSAPP LOGIC ---
         window.handleWhatsApp = function() {
+            if(!userPin) {
+                alert("Please Login to contact the seller.");
+                window.location.href = "index.html";
+                return;
+            }
+
             if(!window.currentItem) return;
-            let phone = (window.currentItem.seller_phone || "").replace(/\D/g, '');
-            if(phone.length === 10) phone = "91" + phone;
-            if(phone.length < 10) return alert("Invalid Phone Number");
-            const text = `Hi, I am interested in: ${window.currentItem.title}`;
-            window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+
+            // 1. Get Seller Number
+            let sellerPhone = (window.currentItem.seller_phone || "").toString().replace(/\D/g, ''); // Remove non-digits
+            
+            if(sellerPhone.length < 10) {
+                alert("Seller has not provided a valid phone number.");
+                return;
+            }
+
+            // Add Country Code if missing (Assuming India +91)
+            if(sellerPhone.length === 10) sellerPhone = "91" + sellerPhone;
+
+            // 2. Construct Message with Buyer Details
+            const text = `Hi, I am ${buyerInfo.name} (${buyerInfo.phone}). \nI am interested in your item: *${window.currentItem.title}* listed on the Student Market. Is it available?`;
+
+            // 3. Open Universal Link (Works on PC & Mobile)
+            const url = `https://wa.me/${sellerPhone}?text=${encodeURIComponent(text)}`;
+            
+            // Open in new tab to prevent popup blocking issues
+            window.open(url, '_blank');
         }
 
         window.openReportModal = function() {
@@ -203,11 +264,12 @@
                     reporter: userPin,
                     timestamp: serverTimestamp()
                 });
-                alert("Report Sent!");
+                alert("Report Sent! We will review it.");
                 document.getElementById('reportModal').style.display = 'none';
             } catch(e) { alert("Error: " + e.message); }
         }
     </script>
+
 </body>
   </html>
 
