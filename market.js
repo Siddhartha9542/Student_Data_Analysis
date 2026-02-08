@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, getDoc, doc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, getDoc, doc, deleteDoc, updateDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 // --- CONFIGURATION ---
@@ -54,7 +54,9 @@ async function compressImage(file) {
     });
 }
 
-// --- LOAD MARKETPLACE ---
+// ==========================================
+// 1. PUBLIC MARKETPLACE LOGIC
+// ==========================================
 window.loadMarketplace = async function() {
     const container = document.getElementById('marketContainer');
     if(!container) return;
@@ -78,15 +80,33 @@ window.loadMarketplace = async function() {
 
         querySnapshot.forEach((doc) => {
             const item = doc.data();
+            
+            // Check Availability Date
+            let availBadge = "";
+            let isFuture = false;
+            
+            if (item.available_date) {
+                const availDate = new Date(item.available_date);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                
+                if (availDate > today) {
+                    isFuture = true;
+                    availBadge = `<div class="date-badge">Available on ${availDate.toLocaleDateString()}</div>`;
+                }
+            }
+
             const card = document.createElement('div');
             card.className = 'item-card';
-            // Points to Contact.html which now has the fixed WhatsApp logic
+            
+            // If future date, maybe warn on click or just show badge
             card.onclick = () => window.location.href = `Contact.html?id=${doc.id}`; 
             
             card.innerHTML = `
                 <div class="item-img-box">
                     <img src="${item.image_url}" onerror="this.src='https://via.placeholder.com/150?text=No+Image'">
                     <div class="price-tag">₹${item.price}</div>
+                    ${availBadge}
                 </div>
                 <div class="item-info">
                     <div class="item-title">${item.title}</div>
@@ -98,19 +118,17 @@ window.loadMarketplace = async function() {
 
     } catch (error) {
         console.error(error);
-        if(error.code === 'failed-precondition') {
-             container.innerHTML = '<p style="color:red; text-align:center;">INDEX ERROR: Check Console (F12)</p>';
-        } else {
-             container.innerHTML = `<p style="color:red; text-align:center;">Error: ${error.message}</p>`;
-        }
+        container.innerHTML = `<p style="color:red; text-align:center;">Error: ${error.message}</p>`;
     }
 }
 
-// --- SUBMIT AD ---
+// ==========================================
+// 2. SUBMIT AD LOGIC
+// ==========================================
 window.submitAd = async function() {
     if (!currentUserPIN) {
         alert("Please login first!");
-        window.location.href = "index.html"; // Redirect to your main login page
+        window.location.href = "auth.html";
         return;
     }
 
@@ -131,7 +149,6 @@ window.submitAd = async function() {
     submitBtn.disabled = true;
 
     try {
-        // 1. Fetch User Data to get Phone
         const userDocRef = doc(db, "users", currentUserPIN);
         const userSnap = await getDoc(userDocRef);
         
@@ -139,20 +156,15 @@ window.submitAd = async function() {
         if (userSnap.exists()) {
             sellerPhone = userSnap.data().phone || "";
         }
-
-        // --- VALIDATION: BLOCK SUBMISSION IF NO PHONE ---
-        // Removes non-digit chars and checks length
         const cleanPhone = sellerPhone.toString().replace(/\D/g, '');
         
         if (!sellerPhone || cleanPhone.length < 10) {
-            alert("⚠️ Cannot Post Ad:\nYour profile is missing a valid Phone Number.\nBuyers need this to contact you on WhatsApp.\n\nPlease contact Admin to update your profile.");
+            alert("⚠️ Cannot Post Ad:\nYour profile is missing a valid Phone Number.\nBuyers need this to contact you.");
             submitBtn.innerText = "SUBMIT AD";
             submitBtn.disabled = false;
-            return; // STOP EXECUTION HERE
+            return;
         }
-        // ------------------------------------------------
 
-        // 2. Upload to Supabase
         submitBtn.innerText = "Uploading Image...";
         const compressedBase64 = await compressImage(fileInput.files[0]);
         const imageBlob = dataURLtoBlob(compressedBase64);
@@ -164,12 +176,10 @@ window.submitAd = async function() {
 
         if (error) throw new Error("Supabase Upload Failed: " + error.message);
 
-        // 3. Get Public URL
         const { data: publicURLData } = supabase.storage
             .from('market-images')
             .getPublicUrl(fileName);
         
-        // 4. Save to Firebase
         submitBtn.innerText = "Saving...";
         await addDoc(collection(db, "market_items"), {
             title: title,
@@ -180,8 +190,9 @@ window.submitAd = async function() {
             image_url: publicURLData.publicUrl,
             seller_pin: currentUserPIN,
             seller_name: currentUserName || "Student",
-            seller_phone: sellerPhone, // Guaranteed to exist now
+            seller_phone: sellerPhone,
             status: "pending",
+            available_date: null,
             timestamp: serverTimestamp()
         });
 
@@ -190,15 +201,166 @@ window.submitAd = async function() {
         submitBtn.disabled = false;
 
     } catch (error) {
-        console.error("Error:", error);
         alert("Error: " + error.message);
         submitBtn.innerText = "Try Again";
         submitBtn.disabled = false;
     }
 }
 
-// --- AUTO-START LOGIC ---
-// This ensures the loader runs immediately on the Marketplace page
-if (document.getElementById('marketContainer')) {
-    window.loadMarketplace();
+// ==========================================
+// 3. MY ADS DASHBOARD LOGIC (MyAds.html)
+// ==========================================
+window.loadMyAds = async function() {
+    const list = document.getElementById('myAdsList');
+    if(!list || !currentUserPIN) return;
+
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:#888">Loading...</div>';
+
+    try {
+        // Query ALL items by this seller (Pending, Approved, Sold)
+        const q = query(collection(db, "market_items"), where("seller_pin", "==", currentUserPIN), orderBy("timestamp", "desc"));
+        const snap = await getDocs(q);
+
+        if(snap.empty) {
+            list.innerHTML = '<div style="padding:40px;text-align:center;color:#666">You haven\'t posted any ads yet.</div>';
+            return;
+        }
+
+        let html = "";
+        snap.forEach(doc => {
+            const data = doc.data();
+            const isSold = data.status === "sold";
+            
+            // Format Status Color
+            let statusColor = "#ffd700"; // Pending (Gold)
+            if(data.status === "approved") statusColor = "#00ff9d";
+            if(data.status === "sold") statusColor = "#ff0055";
+
+            html += `
+                <div class="ad-card" style="opacity: ${isSold ? 0.6 : 1}">
+                    <img src="${data.image_url}" class="ad-thumb">
+                    <div class="ad-info">
+                        <div class="ad-title">${data.title}</div>
+                        <div class="ad-price">₹${data.price}</div>
+                        <div class="ad-status" style="color:${statusColor}">${data.status.toUpperCase()}</div>
+                        
+                        <div class="controls">
+                            <button class="btn-control btn-delete" onclick="deleteAd('${doc.id}')">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                            <button class="btn-control btn-sold" onclick="toggleSold('${doc.id}', '${data.status}')">
+                                <i class="fa-solid ${isSold ? 'fa-rotate-left' : 'fa-check'}"></i> ${isSold ? 'Relist' : 'Sold'}
+                            </button>
+                            <button class="btn-control" onclick="openDateModal('${doc.id}')">
+                                <i class="fa-regular fa-calendar"></i> Avail
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        list.innerHTML = html;
+
+    } catch(e) {
+        console.error(e);
+        list.innerHTML = "Error loading ads.";
+    }
+}
+
+window.deleteAd = async function(id) {
+    if(!confirm("Are you sure you want to permanently delete this ad?")) return;
+    await deleteDoc(doc(db, "market_items", id));
+    loadMyAds();
+}
+
+window.toggleSold = async function(id, currentStatus) {
+    // Toggle: If Sold -> Approved (Relist), If Approved/Pending -> Sold
+    const newStatus = currentStatus === "sold" ? "approved" : "sold";
+    await updateDoc(doc(db, "market_items", id), { status: newStatus });
+    loadMyAds();
+}
+
+let currentAdId = null;
+window.openDateModal = function(id) {
+    currentAdId = id;
+    document.getElementById('dateModal').style.display = 'flex';
+}
+
+window.closeDateModal = function() {
+    document.getElementById('dateModal').style.display = 'none';
+}
+
+window.saveAvailability = async function() {
+    const dateVal = document.getElementById('availDate').value;
+    if(!dateVal) return alert("Select a date");
+    
+    // Convert to ISO string (YYYY-MM-DD)
+    await updateDoc(doc(db, "market_items", currentAdId), { available_date: dateVal });
+    closeDateModal();
+    alert("Availability Updated!");
+    loadMyAds();
+}
+
+// ==========================================
+// 4. NOTIFICATION SYSTEM LOGIC
+// ==========================================
+window.checkNotifications = async function() {
+    if(!currentUserPIN || !document.getElementById('notifDot')) return;
+
+    try {
+        const q = query(
+            collection(db, "notifications"), 
+            where("recipient_pin", "==", currentUserPIN),
+            orderBy("timestamp", "desc")
+        );
+        
+        const snap = await getDocs(q);
+        const list = document.getElementById('notifList');
+        const dot = document.getElementById('notifDot');
+        
+        let unreadCount = 0;
+        let html = "";
+
+        if(snap.empty) {
+            list.innerHTML = '<div style="padding:15px; text-align:center; color:#666;">No notifications</div>';
+            return;
+        }
+
+        snap.forEach(doc => {
+            const data = doc.data();
+            if(!data.is_read) unreadCount++;
+            
+            const icon = data.type === 'success' ? '✅' : '❌';
+            
+            html += `
+                <div class="notif-item ${!data.is_read ? 'unread' : ''}" onclick="markRead('${doc.id}')">
+                    <div style="font-weight:600; margin-bottom:4px;">${icon} ${data.type === 'success' ? 'Approved' : 'Rejected'}</div>
+                    <div>${data.message}</div>
+                </div>
+            `;
+        });
+
+        list.innerHTML = html;
+        if(unreadCount > 0) dot.classList.add('active');
+        else dot.classList.remove('active');
+
+    } catch(e) {
+        console.error("Notif Error:", e);
+    }
+}
+
+window.toggleNotifs = function() {
+    const list = document.getElementById('notifList');
+    list.classList.toggle('show');
+}
+
+window.markRead = async function(id) {
+    await updateDoc(doc(db, "notifications", id), { is_read: true });
+    checkNotifications(); // Refresh UI
+}
+
+// --- INIT ---
+if(document.getElementById('marketContainer')) {
+    loadMarketplace();
+    checkNotifications(); // Check alerts on load
 }
