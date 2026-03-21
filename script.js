@@ -19,23 +19,14 @@
 
 console.log("Script Loaded - V18 (Redirect Fixed)");
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+// script.js
+import { db, auth } from "./firebase-config.js";
+import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDpN_1iAlE6K7YEeKOt5fMnPqMo5eNodBM",
-  authDomain: "student-data-analysis-85831.firebaseapp.com",
-  projectId: "student-data-analysis-85831",
-  storageBucket: "student-data-analysis-85831.firebasestorage.app",
-  messagingSenderId: "739540856409",
-  appId: "1:739540856409:web:155e5d3efb17211aff8b48",
-  measurementId: "G-Y0VK71KDB1"
-};
+// Rest of your startAnalysis, handleSignup, and handleLogin functions...
+// (Ensure you remove the old initializeApp calls inside this file)
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
 
 // ===============================================
 // 1. ANALYTICS LOGIC
