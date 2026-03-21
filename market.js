@@ -1,23 +1,17 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, getDoc, doc, deleteDoc, updateDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+// market.js
+import { db, auth } from "./firebase-config.js";
+import { 
+    collection, addDoc, getDocs, getDoc, doc, 
+    deleteDoc, updateDoc, query, where, orderBy, serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 // --- CONFIGURATION ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDpN_1iAlE6K7YEeKOt5fMnPqMo5eNodBM",
-  authDomain: "student-data-analysis-85831.firebaseapp.com",
-  projectId: "student-data-analysis-85831",
-  storageBucket: "student-data-analysis-85831.firebasestorage.app",
-  messagingSenderId: "739540856409",
-  appId: "1:739540856409:web:155e5d3efb17211aff8b48",
-  measurementId: "G-Y0VK71KDB1"
-};
+[span_0](start_span)// Firebase is now handled via the import above[span_0](end_span).
 
 const supabaseUrl = 'https://zgkjmnoqnbtfcyrifjai.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpna2ptbm9xbmJ0ZmN5cmlmamFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MjkyMDQsImV4cCI6MjA4NTEwNTIwNH0.p4M5L5XrNwPfYZ78uiHYqbnMyW80vca1p0Ua-_g88x4';
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const currentUserPIN = localStorage.getItem("userPIN");
@@ -81,25 +75,19 @@ window.loadMarketplace = async function() {
         querySnapshot.forEach((doc) => {
             const item = doc.data();
             
-            // Check Availability Date
             let availBadge = "";
-            let isFuture = false;
-            
             if (item.available_date) {
                 const availDate = new Date(item.available_date);
                 const today = new Date();
                 today.setHours(0,0,0,0);
                 
                 if (availDate > today) {
-                    isFuture = true;
                     availBadge = `<div class="date-badge">Available on ${availDate.toLocaleDateString()}</div>`;
                 }
             }
 
             const card = document.createElement('div');
             card.className = 'item-card';
-            
-            // If future date, maybe warn on click or just show badge
             card.onclick = () => window.location.href = `Contact.html?id=${doc.id}`; 
             
             card.innerHTML = `
@@ -217,7 +205,6 @@ window.loadMyAds = async function() {
     list.innerHTML = '<div style="padding:20px;text-align:center;color:#888">Loading...</div>';
 
     try {
-        // Query ALL items by this seller (Pending, Approved, Sold)
         const q = query(collection(db, "market_items"), where("seller_pin", "==", currentUserPIN), orderBy("timestamp", "desc"));
         const snap = await getDocs(q);
 
@@ -231,8 +218,7 @@ window.loadMyAds = async function() {
             const data = doc.data();
             const isSold = data.status === "sold";
             
-            // Format Status Color
-            let statusColor = "#ffd700"; // Pending (Gold)
+            let statusColor = "#ffd700"; 
             if(data.status === "approved") statusColor = "#00ff9d";
             if(data.status === "sold") statusColor = "#ff0055";
 
@@ -274,7 +260,6 @@ window.deleteAd = async function(id) {
 }
 
 window.toggleSold = async function(id, currentStatus) {
-    // Toggle: If Sold -> Approved (Relist), If Approved/Pending -> Sold
     const newStatus = currentStatus === "sold" ? "approved" : "sold";
     await updateDoc(doc(db, "market_items", id), { status: newStatus });
     loadMyAds();
@@ -294,7 +279,6 @@ window.saveAvailability = async function() {
     const dateVal = document.getElementById('availDate').value;
     if(!dateVal) return alert("Select a date");
     
-    // Convert to ISO string (YYYY-MM-DD)
     await updateDoc(doc(db, "market_items", currentAdId), { available_date: dateVal });
     closeDateModal();
     alert("Availability Updated!");
@@ -356,11 +340,11 @@ window.toggleNotifs = function() {
 
 window.markRead = async function(id) {
     await updateDoc(doc(db, "notifications", id), { is_read: true });
-    checkNotifications(); // Refresh UI
+    checkNotifications(); 
 }
 
 // --- INIT ---
 if(document.getElementById('marketContainer')) {
     loadMarketplace();
-    checkNotifications(); // Check alerts on load
+    checkNotifications(); 
 }
