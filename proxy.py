@@ -144,6 +144,15 @@ def analyze_class():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    # Run on 0.0.0.0 so Cloudflare can see it
-    app.run(host='0.0.0.0', port=5000)
+    print("--- SBTET PROXY SERVER STARTING ---")
+    print("1. Ensure your Cloudflare Tunnel is pointing to http://localhost:5000")
+    print("2. Current Port: 5000")
+    print("3. Status: Listening for incoming student analysis requests...")
+    
+    try:
+        # Debug=True helps you see errors in the terminal in real-time
+        app.run(host='0.0.0.0', port=5000, debug=True)
+    except Exception as e:
+        print(f"CRITICAL ERROR: Server failed to start. Reason: {e}")
+
 
