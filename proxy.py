@@ -142,6 +142,10 @@ def analyze_class():
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+@app.route('/test')
+def test_proxy():
+    return {"status": "online", "message": "Proxy is reaching Siddhartha's laptop!"}
+    
 
 if __name__ == '__main__':
     print("--- SBTET PROXY SERVER STARTING ---")
