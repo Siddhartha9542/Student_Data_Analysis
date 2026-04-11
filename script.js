@@ -69,6 +69,7 @@ window.startAnalysis = async function() {
     const pin = document.getElementById('pinInput').value.trim().toUpperCase();
     if(!pin) return alert("Enter PIN");
 
+    // UI Transition to Loading
     document.getElementById('inputView').classList.add('hidden');
     document.getElementById('loadingView').classList.remove('hidden');
     document.getElementById('loadingView').style.opacity = '1';
@@ -80,20 +81,19 @@ window.startAnalysis = async function() {
     const status = document.getElementById('statusLabel');
 
     const interval = setInterval(() => {
-        if(progress < 90) {
+        if(progress < 95) { // Slow down near the end until API responds
             progress += 0.5;
             const offset = 565 - (progress / 100) * 565;
             ring.style.strokeDashoffset = offset;
             bar.style.width = progress + '%';
             txt.innerHTML = Math.floor(progress) + '<span>%</span>';
-            if(progress > 20) status.innerText = "Fetching Class Results...";
-            if(progress > 60) status.innerText = "Calculating Subject Analysis...";
+            if(progress > 20) status.innerText = "Connecting to SBTET Server...";
+            if(progress > 60) status.innerText = "Extracting Academic Data...";
         }
     }, 50);
 
     try {
         const response = await fetch('/api/analyze', {
-
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ pin: pin })
@@ -101,33 +101,30 @@ window.startAnalysis = async function() {
 
         const json = await response.json();
 
-        if(response.ok && json.status === "success") {
-            const data = json.data;
-            const me = data.me_smart || { name: "Unknown", sgpa: 0 };
-            const leaderboard = data.leaderboard || [];
+        // --- THE BIG FIX: DATA VERIFICATION ---
+        // 1. Check if the response is actually okay
+        // 2. Verify that the leaderboard is not empty
+        // 3. Ensure "me_smart" contains actual SGPA data
+        if(response.ok && json.status === "success" && json.data.leaderboard.length > 0) {
             
-            // --- CALCULATION LOGIC ---
+            const data = json.data;
+            const me = data.me_smart;
+            const leaderboard = data.leaderboard;
+            
+            // --- CALCULATION LOGIC (Local Only) ---
             const sgpas = leaderboard.map(s => s.sgpa).filter(v => v > 0);
             const classStats = {
-                top: sgpas.length ? Math.max(...sgpas) : 0,
-                low: sgpas.length ? Math.min(...sgpas) : 0,
-                avg: sgpas.length ? (sgpas.reduce((a,b)=>a+b,0)/sgpas.length).toFixed(2) : 0
+                top: Math.max(...sgpas),
+                low: Math.min(...sgpas),
+                avg: (sgpas.reduce((a,b)=>a+b,0)/sgpas.length).toFixed(2)
             };
 
             const subStats = calculateSubjectStats(leaderboard, pin);
 
-            // Save to Firebase (Analytics Data)
-            await setDoc(doc(db, "class_results", pin), {
-                name: me.name,
-                pin: me.pin,
-                branch: me.branch || "GEN",
-                avg_sgpa: me.sgpa,
-                credits: me.credits || 0,
-                class_stats: classStats,
-                last_updated: new Date().toISOString()
-            });
+            // --- NO FIREBASE FOR MARKS ---
+            // We skip saving results to Firebase to keep your data live and private.
 
-            // Save to LocalStorage
+            // Save to LocalStorage for Dashboard UI
             localStorage.setItem("user_pin", pin);
             localStorage.setItem("leaderboard_data", JSON.stringify(leaderboard));
             localStorage.setItem("my_detailed_history", JSON.stringify(data.me_history_detailed));
@@ -135,26 +132,30 @@ window.startAnalysis = async function() {
             localStorage.setItem("my_sgpa", me.sgpa);
             localStorage.setItem("subject_stats", JSON.stringify(subStats)); 
 
+            // Completion Animation
             clearInterval(interval);
             ring.style.strokeDashoffset = 0;
             bar.style.width = '100%';
             txt.innerHTML = '100<span>%</span>';
-            status.innerText = "Success!";
+            status.innerText = "Data Verified!";
             
             setTimeout(() => window.location.href = "dashboard.html", 800);
 
         } else {
-            alert("API Error: " + (json.message || "Unknown"));
-            location.reload();
+            // IF API FAILS OR DATA IS EMPTY
+            clearInterval(interval);
+            alert("Verification Failed: SBTET API returned no marks for this PIN. Please check your PIN or Proxy connection.");
+            location.reload(); // Returns to PIN input safely
         }
 
     } catch (e) {
         clearInterval(interval);
         console.error(e);
-        alert("Connection Error. Ensure Proxy is running.");
+        alert("CRITICAL ERROR: Could not reach the Analysis API. Ensure proxy.py is running via start.sh.");
         location.reload();
     }
 };
+
 
 // --- DASHBOARD LOADER ---
 if(window.location.pathname.includes('dashboard.html')) {
