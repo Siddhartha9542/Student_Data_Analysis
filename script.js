@@ -157,38 +157,46 @@ window.startAnalysis = async function() {
 };
 
 
-// --- DASHBOARD LOADER ---
+// --- DASHBOARD LOADER (Local Data Only) ---
 if(window.location.pathname.includes('dashboard.html')) {
-    const pin = localStorage.getItem("user_pin");
+    const pin = localStorage.getItem("userPIN");
+    const leaderboardRaw = localStorage.getItem("leaderboard_data");
     const statsRaw = localStorage.getItem("class_stats");
     const mySgpa = localStorage.getItem("my_sgpa");
 
-    if(pin) {
-        if(statsRaw) {
-            const stats = JSON.parse(statsRaw);
-            const mine = parseFloat(mySgpa) || 0;
-            if(window.drawBarGraph) {
-                window.drawBarGraph(stats.top, stats.avg, stats.low, mine);
+    if(pin && leaderboardRaw) {
+        const leaderboard = JSON.parse(leaderboardRaw);
+        
+        // Find yourself in the local data
+        const me = leaderboard.find(s => s.pin === pin);
+
+        if(me) {
+            // Update Profile Info
+            if(document.querySelector('.student-details h2'))
+                document.querySelector('.student-details h2').innerText = me.name;
+            if(document.querySelector('.student-details p'))
+                document.querySelector('.student-details p').innerText = me.pin;
+            
+            // Update Stat Boxes
+            const statBoxes = document.querySelectorAll('.stat-box h3');
+            if(statBoxes.length > 0) {
+                statBoxes[0].innerText = me.sgpa;
+                statBoxes[1].innerText = me.credits || "0";
             }
         }
-        getDoc(doc(db, "class_results", pin)).then(docSnap => {
-            if(docSnap.exists()) {
-                const d = docSnap.data();
-                if(document.querySelector('.student-details h2'))
-                    document.querySelector('.student-details h2').innerText = d.name;
-                if(document.querySelector('.student-details p'))
-                    document.querySelector('.student-details p').innerText = d.pin + " | " + d.branch;
-                const statBoxes = document.querySelectorAll('.stat-box h3');
-                if(statBoxes.length > 0) {
-                    statBoxes[0].innerText = d.avg_sgpa;
-                    statBoxes[1].innerText = d.credits;
-                }
-            }
-        });
+
+        // Draw Graph
+        if(statsRaw && window.drawBarGraph) {
+            const stats = JSON.parse(statsRaw);
+            const mine = parseFloat(mySgpa) || 0;
+            window.drawBarGraph(stats.top, stats.avg, stats.low, mine);
+        }
     } else {
-        window.location.href = "pin.html"; // Redirect to auth if no pin
+        // Force analysis if data is missing
+        window.location.href = "pin.html"; 
     }
 }
+
 
 // ===============================================
 // 2. AUTHENTICATION LOGIC (UPDATED)
