@@ -7,7 +7,7 @@
     const isLoginPage = path.includes('index.html') || path.includes('auth.html') || path === '/';
 
     // 2. Check if User is Logged In
-    const userPin = localStorage.getItem("userPIN"); // OR "user_pin" depending on your storage key
+    const userPin = localStorage.getItem("userPIN"); // OR "userPIN" depending on your storage key
 
     // 3. Logic:
     // If we are NOT on the login page AND we don't have a PIN...
@@ -125,7 +125,7 @@ window.startAnalysis = async function() {
             // We skip saving results to Firebase to keep your data live and private.
 
             // Save to LocalStorage for Dashboard UI
-            localStorage.setItem("user_pin", pin);
+            localStorage.setItem("userPIN", pin);
             localStorage.setItem("leaderboard_data", JSON.stringify(leaderboard));
             localStorage.setItem("my_detailed_history", JSON.stringify(data.me_history_detailed));
             localStorage.setItem("class_stats", JSON.stringify(classStats));
