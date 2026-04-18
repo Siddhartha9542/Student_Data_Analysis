@@ -7,7 +7,7 @@ import {
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
 // --- CONFIGURATION ---
-[span_0](start_span)// Firebase is now handled via the import above[span_0](end_span).
+
 
 const supabaseUrl = 'https://zgkjmnoqnbtfcyrifjai.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpna2ptbm9xbmJ0ZmN5cmlmamFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MjkyMDQsImV4cCI6MjA4NTEwNTIwNH0.p4M5L5XrNwPfYZ78uiHYqbnMyW80vca1p0Ua-_g88x4';
